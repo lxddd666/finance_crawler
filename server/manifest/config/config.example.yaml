@@ -258,9 +258,9 @@ hggen:
           masterPackage: "sys"                                          # 主包名称，需和controllerPath、logicPath、inputPath保持关联
           templatePath: "./resource/generate/default/curd"              # 模板路径
           apiPath: "./api/admin"                                        # goApi生成路径
-          controllerPath: "./internal/controller/admin/sys"             # 控制器生成路径
-          logicPath: "./internal/logic/sys"                             # 主要业务生成路径
-          inputPath: "./internal/model/input/sysin"                     # 表单过滤器生成路径
+          controllerPath: "./internal/controller/finance"             # 控制器生成路径
+          logicPath: "./internal/logic/finance"                             # 主要业务生成路径
+          inputPath: "./internal/model/input/financein"                     # 表单过滤器生成路径
           routerPath: "./internal/router/genrouter"                     # 生成路由表路径
           sqlPath: "./storage/data/generate"                            # 生成sql语句路径
           webApiPath: "../web/src/api"                                  # webApi生成路径
