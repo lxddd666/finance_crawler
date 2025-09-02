@@ -202,7 +202,7 @@ func (s *sSysTestFinance) Start(ctx context.Context) error {
 	q := req.URL.Query()
 	token := "1b48ab3a3f318e1db193f5de915d4583-c-app"
 	q.Add("token", token)
-	queryStr := `{"trace":"1111111111111111111111111","data":{"code":"AAPL.US","kline_type":1,"kline_timestamp_end":0,"query_kline_num":10,"adjust_type":0}}`
+	queryStr := `{"trace":"1111111111111111111111111","data":{"code":"AAPL.US","kline_type":8,"kline_timestamp_end":0,"query_kline_num":500,"adjust_type":0}}`
 	q.Add("query", queryStr)
 	req.URL.RawQuery = q.Encode()
 	// 发送请求

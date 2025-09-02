@@ -14,6 +14,22 @@ import (
 )
 
 type (
+	ISysFinanceAlltickResponse interface {
+		// Model alltick返回值ORM模型
+		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
+		// List 获取alltick返回值列表
+		List(ctx context.Context, in *sysin.FinanceAlltickResponseListInp) (list []*sysin.FinanceAlltickResponseListModel, totalCount int, err error)
+		// Export 导出alltick返回值
+		Export(ctx context.Context, in *sysin.FinanceAlltickResponseListInp) (err error)
+		// Edit 修改/新增alltick返回值
+		Edit(ctx context.Context, in *sysin.FinanceAlltickResponseEditInp) (err error)
+		// Delete 删除alltick返回值
+		Delete(ctx context.Context, in *sysin.FinanceAlltickResponseDeleteInp) (err error)
+		// MaxSort 获取alltick返回值最大排序
+		MaxSort(ctx context.Context, in *sysin.FinanceAlltickResponseMaxSortInp) (res *sysin.FinanceAlltickResponseMaxSortModel, err error)
+		// View 获取alltick返回值指定信息
+		View(ctx context.Context, in *sysin.FinanceAlltickResponseViewInp) (res *sysin.FinanceAlltickResponseViewModel, err error)
+	}
 	ISysFinanceCode interface {
 		// Model 股票代码ORM模型
 		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
@@ -28,7 +44,7 @@ type (
 		// View 获取股票代码指定信息
 		View(ctx context.Context, in *sysin.FinanceCodeViewInp) (res *sysin.FinanceCodeViewModel, err error)
 		// ImportCode 导入股票代码
-		ImportCode(ctx context.Context, inp sysin.FinanceImportCodeInp) error
+		ImportCode(ctx context.Context, inp sysin.FinanceImportCodeInp) (err error)
 	}
 	ISysTestFinance interface {
 		// Model 测试分类ORM模型
@@ -53,9 +69,21 @@ type (
 )
 
 var (
-	localSysFinanceCode ISysFinanceCode
-	localSysTestFinance ISysTestFinance
+	localSysFinanceAlltickResponse ISysFinanceAlltickResponse
+	localSysFinanceCode            ISysFinanceCode
+	localSysTestFinance            ISysTestFinance
 )
+
+func SysFinanceAlltickResponse() ISysFinanceAlltickResponse {
+	if localSysFinanceAlltickResponse == nil {
+		panic("implement not found for interface ISysFinanceAlltickResponse, forgot register?")
+	}
+	return localSysFinanceAlltickResponse
+}
+
+func RegisterSysFinanceAlltickResponse(i ISysFinanceAlltickResponse) {
+	localSysFinanceAlltickResponse = i
+}
 
 func SysFinanceCode() ISysFinanceCode {
 	if localSysFinanceCode == nil {
