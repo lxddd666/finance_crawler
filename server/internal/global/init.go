@@ -60,6 +60,9 @@ func Init(ctx context.Context) {
 
 	// 订阅集群同步
 	SubscribeClusterSync(ctx)
+
+	// 财经init
+	FinanceInit(ctx)
 }
 
 // LoggingServeLogHandler 服务日志处理
@@ -165,4 +168,8 @@ func SetGFMode(ctx context.Context) {
 	if validate.InSlice(modes, mode) {
 		gmode.Set(mode)
 	}
+}
+
+func FinanceInit(ctx context.Context) {
+	_, _ = service.SysConfig().FinanceConfig(ctx)
 }

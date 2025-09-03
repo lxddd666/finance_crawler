@@ -45,3 +45,6 @@ gfcli:
       dstFolder: "internal/controller/finance"
       clear: true
       merge: false
+
+finance:
+  alltickToken: "1b48ab3a3f318e1db193f5de915d4583-c-app"

@@ -330,3 +330,16 @@ func (s *sSysConfig) ClusterSync(ctx context.Context, message *gredis.Message) {
 		g.Log().Errorf(ctx, "ClusterSync fail：%+v", err)
 	}
 }
+
+func (s *sSysConfig) FinanceConfig(ctx context.Context) (conf *entity.FinanceConfig, err error) {
+	err = g.Cfg().MustGet(ctx, "finance.alltickToken").Scan(&conf)
+	if err != nil {
+		return
+	}
+	if conf == nil {
+		err = gerror.New("获取配置token失败")
+		return
+	}
+	global.FinanceConfig = conf
+	return
+}

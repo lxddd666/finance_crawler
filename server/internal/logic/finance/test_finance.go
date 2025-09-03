@@ -8,9 +8,11 @@ package sys
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"hotgo/internal/dao"
 	"hotgo/internal/library/hgorm/handler"
+	"hotgo/internal/model/entity"
 	sysin "hotgo/internal/model/input/financein"
 	"hotgo/internal/model/input/form"
 	"hotgo/internal/service"
@@ -29,12 +31,53 @@ import (
 
 type sSysTestFinance struct{}
 
+// FinanceAlltickRequestData 用于JSON序列化的数据结构
+type FinanceAlltickRequestData struct {
+	Code              string `json:"code"`
+	KlineType         int    `json:"kline_type"`
+	KlineTimestampEnd int    `json:"kline_timestamp_end"`
+	AdjustType        int    `json:"adjust_type"`
+	QueryKlineNum     int    `json:"query_kline_num"`
+}
+
+// FinanceAlltickRequestQuery 用于JSON序列化的完整查询结构
+type FinanceAlltickRequestQuery struct {
+	Trace string                    `json:"trace"`
+	Data  FinanceAlltickRequestData `json:"data"`
+}
+
 func NewSysTestFinance() *sSysTestFinance {
 	return &sSysTestFinance{}
 }
 
 func init() {
 	service.RegisterSysTestFinance(NewSysTestFinance())
+}
+
+// ConvertToQueryString 将 FinanceAlltickRequest 结构体转换为 JSON 查询字符串
+func (s *sSysTestFinance) ConvertToQueryString(req *entity.FinanceAlltickRequest, trace string) (string, error) {
+	// 如果 trace 为空，使用默认值
+	if trace == "" {
+		trace = "1111111111111111111111111"
+	}
+
+	query := FinanceAlltickRequestQuery{
+		Trace: trace,
+		Data: FinanceAlltickRequestData{
+			Code:              req.Code,
+			KlineType:         req.KlineType,
+			KlineTimestampEnd: req.KlineTimestampEnd,
+			AdjustType:        req.AdjustType,
+			QueryKlineNum:     req.QueryKlineNum,
+		},
+	}
+
+	jsonBytes, err := json.Marshal(query)
+	if err != nil {
+		return "", fmt.Errorf("JSON序列化失败: %v", err)
+	}
+
+	return string(jsonBytes), nil
 }
 
 // Model 测试分类ORM模型
@@ -200,9 +243,24 @@ func (s *sSysTestFinance) Start(ctx context.Context) error {
 	}
 
 	q := req.URL.Query()
-	token := "1b48ab3a3f318e1db193f5de915d4583-c-app"
-	q.Add("token", token)
-	queryStr := `{"trace":"1111111111111111111111111","data":{"code":"AAPL.US","kline_type":8,"kline_timestamp_end":0,"query_kline_num":500,"adjust_type":0}}`
+	//token := "1b48ab3a3f318e1db193f5de915d4583-c-app"
+	//q.Add("token", token)
+
+	// 创建 FinanceAlltickRequest 实例
+	financeRequest := &entity.FinanceAlltickRequest{
+		Code:              "AAPL.US",
+		KlineType:         8,
+		KlineTimestampEnd: 0,
+		QueryKlineNum:     500,
+		AdjustType:        0,
+	}
+
+	// 使用转换方法生成查询字符串
+	queryStr, err := s.ConvertToQueryString(financeRequest, "1111111111111111111111111")
+	if err != nil {
+		fmt.Println("Error converting request to query string:", err)
+		return nil
+	}
 	q.Add("query", queryStr)
 	req.URL.RawQuery = q.Encode()
 	// 发送请求
