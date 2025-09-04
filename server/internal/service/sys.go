@@ -113,7 +113,6 @@ type (
 		UpdateConfigByGroup(ctx context.Context, in *sysin.UpdateConfigInp) (err error)
 		// ClusterSync 集群同步
 		ClusterSync(ctx context.Context, message *gredis.Message)
-		// financeConfig 获取财经配置
 		FinanceConfig(ctx context.Context) (conf *entity.FinanceConfig, err error)
 	}
 	ISysCron interface {

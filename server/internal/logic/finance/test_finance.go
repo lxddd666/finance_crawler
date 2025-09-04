@@ -10,25 +10,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gogf/gf/v2/database/gdb"
+	"github.com/gogf/gf/v2/errors/gerror"
+	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/os/gctx"
+	"github.com/gogf/gf/v2/util/gconv"
 	"hotgo/internal/dao"
-	"hotgo/internal/global"
 	"hotgo/internal/library/hgorm/handler"
-	"hotgo/internal/logic/index"
 	"hotgo/internal/model/entity"
 	sysin "hotgo/internal/model/input/financein"
 	"hotgo/internal/model/input/form"
 	"hotgo/internal/service"
 	"hotgo/utility/convert"
 	"hotgo/utility/excel"
-	"io/ioutil"
-	"log"
-	"net/http"
-
-	"github.com/gogf/gf/v2/database/gdb"
-	"github.com/gogf/gf/v2/errors/gerror"
-	"github.com/gogf/gf/v2/frame/g"
-	"github.com/gogf/gf/v2/os/gctx"
-	"github.com/gogf/gf/v2/util/gconv"
 )
 
 type sSysTestFinance struct{}
@@ -220,87 +214,77 @@ func (s *sSysTestFinance) Status(ctx context.Context, in *sysin.TestFinanceStatu
 
 // Start 更新测试分类状态
 func (s *sSysTestFinance) Start(ctx context.Context) error {
-	//AToken := "1b48ab3a3f318e1db193f5de915d4583-c-app"
-	/*
-		将如下JSON进行url的encode，复制到http的查询字符串的query字段里
-		{"trace" : "go_http_test1","data" : {"code" : "700.HK","kline_type" : 1,"kline_timestamp_end" : 0,"query_kline_num" : 2,"adjust_type": 0}}
-
-		特别注意：
-		github: https://github.com/alltick/realtime-forex-crypto-stock-tick-finance-websocket-api
-		token申请：https://alltick.co
-		把下面url中的testtoken替换为您自己的token
-		外汇，加密货币（数字币），贵金属的api址：
-		https://quote.alltick.io/quote-b-api
-		股票api地址:
-		https://quote.alltick.io/quote-stock-b-api
-	*/
-	url := "https://quote.alltick.io/quote-stock-b-api/kline"
-	log.Println("请求内容：", url)
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		fmt.Println("Error creating request:", err)
-		return nil
-	}
-
-	q := req.URL.Query()
-	q.Add("token", global.FinanceConfig.AlltickToken)
-
-	// 创建 FinanceAlltickRequest 实例
-	financeRequest := &entity.FinanceAlltickRequest{
-		Code:              "AAPL.US",
-		KlineType:         8,
-		KlineTimestampEnd: 0,
-		QueryKlineNum:     20,
-		AdjustType:        0,
-	}
-
-	// 使用转换方法生成查询字符串
-	queryStr, err := s.ConvertToQueryString(financeRequest)
-	if err != nil {
-		fmt.Println("Error converting request to query string:", err)
-		return nil
-	}
-	q.Add("query", queryStr)
-	req.URL.RawQuery = q.Encode()
-	// 发送请求
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		fmt.Println("Error sending request:", err)
-		return nil
-	}
-	defer resp.Body.Close()
-
-	body2, err := ioutil.ReadAll(resp.Body)
-
-	if err != nil {
-
-		log.Println("读取响应失败：", err)
-
-		return nil
-
-	}
-	var response entity.FinanceAlltickResponse
-	err = gconv.Scan(body2, &response)
-
-	if err != nil {
-		return err
-	}
-
-	klineList := make([]entity.StockKlineData, 0)
-	for _, kline := range response.Data.KlineList {
-		klineList = append(klineList, entity.StockKlineData{
-			Code:       response.Data.Code,
-			Timestamp:  gconv.Int64(kline.Timestamp),
-			OpenPrice:  gconv.Float64(kline.OpenPrice),
-			ClosePrice: gconv.Float64(kline.ClosePrice),
-			HighPrice:  gconv.Float64(kline.HighPrice),
-			LowPrice:   gconv.Float64(kline.LowPrice),
-			Volume:     gconv.Int64(kline.Volume),
-			Turnover:   gconv.Float64(kline.Turnover),
-		})
-	}
-	boll, err := index.Boll(ctx, klineList)
-	fmt.Println(boll)
+	//service.SysStockIndicator().Boll(ctx, "AAPL.US", 8, 20, 2)
 	return nil
 }
+
+//
+//func example (ctx context.Context) (err error) {
+//	//AToken := "1b48ab3a3f318e1db193f5de915d4583-c-app"
+//	/*
+//		将如下JSON进行url的encode，复制到http的查询字符串的query字段里
+//		{"trace" : "go_http_test1","data" : {"code" : "700.HK","kline_type" : 1,"kline_timestamp_end" : 0,"query_kline_num" : 2,"adjust_type": 0}}
+//
+//		特别注意：
+//		github: https://github.com/alltick/realtime-forex-crypto-stock-tick-finance-websocket-api
+//		token申请：https://alltick.co
+//		把下面url中的testtoken替换为您自己的token
+//		外汇，加密货币（数字币），贵金属的api址：
+//		https://quote.alltick.io/quote-b-api
+//		股票api地址:
+//		https://quote.alltick.io/quote-stock-b-api
+//	*/
+//	url := "https://quote.alltick.io/quote-stock-b-api/kline"
+//	log.Println("请求内容：", url)
+//
+//	req, err := http.NewRequest("GET", url, nil)
+//	if err != nil {
+//		fmt.Println("Error creating request:", err)
+//		return nil
+//	}
+//
+//	q := req.URL.Query()
+//	q.Add("token", global.FinanceConfig.AlltickToken)
+//
+//	// 创建 FinanceAlltickRequest 实例
+//	financeRequest := &entity.FinanceAlltickRequest{
+//		Code:              "AAPL.US",
+//		KlineType:         8,
+//		KlineTimestampEnd: 0,
+//		QueryKlineNum:     20,
+//		AdjustType:        0,
+//	}
+//
+//	// 使用转换方法生成查询字符串
+//	queryStr, err := s.ConvertToQueryString(financeRequest)
+//	if err != nil {
+//		fmt.Println("Error converting request to query string:", err)
+//		return nil
+//	}
+//	q.Add("query", queryStr)
+//	req.URL.RawQuery = q.Encode()
+//	// 发送请求
+//	resp, err := http.DefaultClient.Do(req)
+//	if err != nil {
+//		fmt.Println("Error sending request:", err)
+//		return nil
+//	}
+//	defer resp.Body.Close()
+//
+//	body2, err := ioutil.ReadAll(resp.Body)
+//
+//	if err != nil {
+//
+//		log.Println("读取响应失败：", err)
+//
+//		return nil
+//
+//	}
+//	var response entity.FinanceAlltickResponse
+//	err = gconv.Scan(body2, &response)
+//
+//	if err != nil {
+//		return err
+//	}
+//	return
+//}

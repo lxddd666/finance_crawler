@@ -8,6 +8,7 @@ package service
 import (
 	"context"
 	"hotgo/internal/library/hgorm/handler"
+	"hotgo/internal/model/entity"
 	sysin "hotgo/internal/model/input/financein"
 
 	"github.com/gogf/gf/v2/database/gdb"
@@ -46,7 +47,12 @@ type (
 		// ImportCode 导入股票代码
 		ImportCode(ctx context.Context, inp sysin.FinanceImportCodeInp) (err error)
 	}
+	ISysStockIndicator interface {
+		//Boll(ctx context.Context, code string, klineType, klineNum, multiple int) (result *sys.BollResult, err error)
+	}
 	ISysTestFinance interface {
+		// ConvertToQueryString 将 FinanceAlltickRequest 结构体转换为 JSON 查询字符串
+		ConvertToQueryString(req *entity.FinanceAlltickRequest) (string, error)
 		// Model 测试分类ORM模型
 		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
 		// List 获取测试分类列表
@@ -71,6 +77,7 @@ type (
 var (
 	localSysFinanceAlltickResponse ISysFinanceAlltickResponse
 	localSysFinanceCode            ISysFinanceCode
+	localSysStockIndicator         ISysStockIndicator
 	localSysTestFinance            ISysTestFinance
 )
 
@@ -94,6 +101,17 @@ func SysFinanceCode() ISysFinanceCode {
 
 func RegisterSysFinanceCode(i ISysFinanceCode) {
 	localSysFinanceCode = i
+}
+
+func SysStockIndicator() ISysStockIndicator {
+	if localSysStockIndicator == nil {
+		panic("implement not found for interface ISysStockIndicator, forgot register?")
+	}
+	return localSysStockIndicator
+}
+
+func RegisterSysStockIndicator(i ISysStockIndicator) {
+	localSysStockIndicator = i
 }
 
 func SysTestFinance() ISysTestFinance {
