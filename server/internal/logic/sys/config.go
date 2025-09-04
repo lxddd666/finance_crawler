@@ -332,13 +332,18 @@ func (s *sSysConfig) ClusterSync(ctx context.Context, message *gredis.Message) {
 }
 
 func (s *sSysConfig) FinanceConfig(ctx context.Context) (conf *entity.FinanceConfig, err error) {
-	err = g.Cfg().MustGet(ctx, "finance.alltickToken").Scan(&conf)
+	var token string
+	err = g.Cfg().MustGet(ctx, "finance.alltickToken").Scan(&token)
 	if err != nil {
 		return
 	}
-	if conf == nil {
+	if token == "" {
 		err = gerror.New("获取配置token失败")
 		return
+	}
+
+	conf = &entity.FinanceConfig{
+		AlltickToken: token,
 	}
 	global.FinanceConfig = conf
 	return

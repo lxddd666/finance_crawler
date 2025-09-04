@@ -11,7 +11,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"hotgo/internal/dao"
+	"hotgo/internal/global"
 	"hotgo/internal/library/hgorm/handler"
+	"hotgo/internal/logic/index"
 	"hotgo/internal/model/entity"
 	sysin "hotgo/internal/model/input/financein"
 	"hotgo/internal/model/input/form"
@@ -55,11 +57,10 @@ func init() {
 }
 
 // ConvertToQueryString 将 FinanceAlltickRequest 结构体转换为 JSON 查询字符串
-func (s *sSysTestFinance) ConvertToQueryString(req *entity.FinanceAlltickRequest, trace string) (string, error) {
+func (s *sSysTestFinance) ConvertToQueryString(req *entity.FinanceAlltickRequest) (string, error) {
 	// 如果 trace 为空，使用默认值
-	if trace == "" {
-		trace = "1111111111111111111111111"
-	}
+
+	trace := "1111111111111111111111111"
 
 	query := FinanceAlltickRequestQuery{
 		Trace: trace,
@@ -243,20 +244,19 @@ func (s *sSysTestFinance) Start(ctx context.Context) error {
 	}
 
 	q := req.URL.Query()
-	//token := "1b48ab3a3f318e1db193f5de915d4583-c-app"
-	//q.Add("token", token)
+	q.Add("token", global.FinanceConfig.AlltickToken)
 
 	// 创建 FinanceAlltickRequest 实例
 	financeRequest := &entity.FinanceAlltickRequest{
 		Code:              "AAPL.US",
 		KlineType:         8,
 		KlineTimestampEnd: 0,
-		QueryKlineNum:     500,
+		QueryKlineNum:     20,
 		AdjustType:        0,
 	}
 
 	// 使用转换方法生成查询字符串
-	queryStr, err := s.ConvertToQueryString(financeRequest, "1111111111111111111111111")
+	queryStr, err := s.ConvertToQueryString(financeRequest)
 	if err != nil {
 		fmt.Println("Error converting request to query string:", err)
 		return nil
@@ -280,8 +280,27 @@ func (s *sSysTestFinance) Start(ctx context.Context) error {
 		return nil
 
 	}
+	var response entity.FinanceAlltickResponse
+	err = gconv.Scan(body2, &response)
 
-	log.Println("响应内容：", string(body2))
+	if err != nil {
+		return err
+	}
 
+	klineList := make([]entity.StockKlineData, 0)
+	for _, kline := range response.Data.KlineList {
+		klineList = append(klineList, entity.StockKlineData{
+			Code:       response.Data.Code,
+			Timestamp:  gconv.Int64(kline.Timestamp),
+			OpenPrice:  gconv.Float64(kline.OpenPrice),
+			ClosePrice: gconv.Float64(kline.ClosePrice),
+			HighPrice:  gconv.Float64(kline.HighPrice),
+			LowPrice:   gconv.Float64(kline.LowPrice),
+			Volume:     gconv.Int64(kline.Volume),
+			Turnover:   gconv.Float64(kline.Turnover),
+		})
+	}
+	boll, err := index.Boll(ctx, klineList)
+	fmt.Println(boll)
 	return nil
 }

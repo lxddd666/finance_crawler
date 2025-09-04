@@ -29,7 +29,6 @@ func (c *cFinanceAlltickResponse) List(ctx context.Context, req *financealltickr
 	if list == nil {
 		list = []*sysin.FinanceAlltickResponseListModel{}
 	}
-
 	res = new(financealltickresponse.ListRes)
 	res.List = list
 	res.PageRes.Pack(req, totalCount)

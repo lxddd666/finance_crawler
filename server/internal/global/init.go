@@ -62,7 +62,7 @@ func Init(ctx context.Context) {
 	SubscribeClusterSync(ctx)
 
 	// 财经init
-	FinanceInit(ctx)
+	_ = FinanceInit(ctx)
 }
 
 // LoggingServeLogHandler 服务日志处理
@@ -170,6 +170,7 @@ func SetGFMode(ctx context.Context) {
 	}
 }
 
-func FinanceInit(ctx context.Context) {
-	_, _ = service.SysConfig().FinanceConfig(ctx)
+func FinanceInit(ctx context.Context) (err error) {
+	_, err = service.SysConfig().FinanceConfig(ctx)
+	return
 }

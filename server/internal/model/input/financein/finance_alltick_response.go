@@ -12,7 +12,6 @@ import (
 	"hotgo/internal/model/input/form"
 
 	"github.com/gogf/gf/v2/encoding/gjson"
-	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gtime"
 )
 
@@ -57,9 +56,6 @@ type FinanceAlltickResponseEditInp struct {
 
 func (in *FinanceAlltickResponseEditInp) Filter(ctx context.Context) (err error) {
 	// 验证排序
-	if err := g.Validator().Rules("required").Data(in.Sort).Messages("排序不能为空").Run(ctx); err != nil {
-		return err.Current()
-	}
 
 	return
 }
