@@ -2,32 +2,24 @@ package sys
 
 import (
 	"context"
+	"fmt"
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/util/gconv"
 	"hotgo/internal/dao"
 	"hotgo/internal/logic/alltick"
+	"hotgo/internal/model/result"
 
 	"hotgo/internal/model/entity"
 	"math"
 )
 
-// BollResult 布林带计算结果
-type BollResult struct {
-	Timestamp         int64   `json:"timestamp"`
-	MiddleBand        float64 // 中轨（移动平均线）
-	UpperBand         float64 // 上轨（移动平均线 + 两倍标准差）
-	LowerBand         float64 // 下轨（移动平均线 - 两倍标准差）
-	StandardDeviation float64 // 标准差
-	ClosePrice        float64 // 当前时间
-}
-
-// Bool
-func (s *sSysStockIndicator) Boll(ctx context.Context, code string, klineType, klineNum, multiple int) (result *BollResult, err error) {
+// Boll boll带
+func (s *sSysStockIndicator) Boll(ctx context.Context, code string, klineType, klineNum, multiple int) (boll *entity.FinanceBoll, err error) {
 	klineList, err := s.bollReq(ctx, code, klineType, klineNum)
 	if err != nil {
 		return
 	}
-	result, lastKline, err := s.calculateBoll(klineList, multiple)
+	result, lastKline, err := s.CalculateBoll(klineList, multiple)
 	if err != nil {
 		return
 	}
@@ -36,7 +28,7 @@ func (s *sSysStockIndicator) Boll(ctx context.Context, code string, klineType, k
 		return
 	}
 	// 插入数据库
-	_, _ = dao.FinanceBoll.Ctx(ctx).InsertIgnore(entity.FinanceBoll{
+	boll = &entity.FinanceBoll{
 		Code:              code,
 		KlineId:           id,
 		KlineType:         klineType,
@@ -48,11 +40,13 @@ func (s *sSysStockIndicator) Boll(ctx context.Context, code string, klineType, k
 		LowerBand:         result.LowerBand,
 		StandardDeviation: result.StandardDeviation,
 		ClosePrice:        result.ClosePrice,
-	})
+		Key:               fmt.Sprintf("%s%d", code, result.Timestamp),
+	}
+	_, _ = dao.FinanceBoll.Ctx(ctx).InsertIgnore(boll)
 	return
 }
 
-func (s *sSysStockIndicator) calculateBoll(data []*entity.StockKlineData, multiple int) (result *BollResult, lastKline *entity.StockKlineData, err error) {
+func (s *sSysStockIndicator) CalculateBoll(data []*entity.FinanceKline, multiple int) (resp *result.BollResult, lastKline *entity.FinanceKline, err error) {
 	if len(data) == 0 {
 		return
 	}
@@ -77,7 +71,7 @@ func (s *sSysStockIndicator) calculateBoll(data []*entity.StockKlineData, multip
 	multipleStandardDeviations := float64(multiple) * standardDeviation
 
 	// 构造布林带结果
-	result = &BollResult{
+	resp = &result.BollResult{
 		MiddleBand:        sma,
 		UpperBand:         sma + multipleStandardDeviations,
 		LowerBand:         sma - multipleStandardDeviations,
@@ -90,7 +84,7 @@ func (s *sSysStockIndicator) calculateBoll(data []*entity.StockKlineData, multip
 }
 
 // bollReq 请求
-func (s *sSysStockIndicator) bollReq(ctx context.Context, code string, klineType, klineNum int) (respData []*entity.StockKlineData, err error) {
+func (s *sSysStockIndicator) bollReq(ctx context.Context, code string, klineType, klineNum int) (respData []*entity.FinanceKline, err error) {
 	////Code:              code,
 	////		KlineType:         8,
 	////		KlineTimestampEnd: 0,
@@ -108,9 +102,9 @@ func (s *sSysStockIndicator) bollReq(ctx context.Context, code string, klineType
 		return
 	}
 
-	respData = make([]*entity.StockKlineData, 0)
+	respData = make([]*entity.FinanceKline, 0)
 	for _, kline := range response.Data.KlineList {
-		respData = append(respData, &entity.StockKlineData{
+		respData = append(respData, &entity.FinanceKline{
 			Code:       response.Data.Code,
 			Timestamp:  gconv.Int64(kline.Timestamp),
 			OpenPrice:  gconv.Float64(kline.OpenPrice),
@@ -129,7 +123,7 @@ func (s *sSysStockIndicator) bollReq(ctx context.Context, code string, klineType
 }
 
 // SimpleMovingAverage 简单移动平均线
-func SimpleMovingAverage(data []*entity.StockKlineData) float64 {
+func SimpleMovingAverage(data []*entity.FinanceKline) float64 {
 	var total float64
 	for _, kline := range data {
 		total += kline.ClosePrice

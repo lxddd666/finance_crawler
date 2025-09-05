@@ -23,4 +23,5 @@ type FinanceBoll struct {
 	KlineNum          int         `json:"klineNum"          orm:"kline_num"          description:"k线根数"`
 	Multiple          int         `json:"multiple"          orm:"multiple"           description:"标准差倍数"`
 	CreatedAt         *gtime.Time `json:"createdAt"         orm:"created_at"         description:"创建时间"`
+	Key               string      `json:"key"               orm:"key"                description:"timestamp和code组合"`
 }

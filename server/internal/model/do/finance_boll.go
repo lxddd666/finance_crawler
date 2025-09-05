@@ -25,4 +25,5 @@ type FinanceBoll struct {
 	KlineNum          interface{} // k线根数
 	Multiple          interface{} // 标准差倍数
 	CreatedAt         *gtime.Time // 创建时间
+	Key               interface{} // timestamp和code组合
 }

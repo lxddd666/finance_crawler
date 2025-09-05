@@ -21,4 +21,5 @@ type FinanceKline struct {
 	Volume     int64       `json:"volume"     orm:"volume"      description:"该K线成交数量"`
 	Turnover   float64     `json:"turnover"   orm:"turnover"    description:"该K线成交金额"`
 	CreatedAt  *gtime.Time `json:"createdAt"  orm:"created_at"  description:"创建时间"`
+	Key        string      `json:"key"        orm:"key"         description:"唯一key，timestamp和code组合"`
 }

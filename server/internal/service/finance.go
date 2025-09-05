@@ -7,11 +7,10 @@ package service
 
 import (
 	"context"
+	"github.com/gogf/gf/v2/database/gdb"
 	"hotgo/internal/library/hgorm/handler"
 	"hotgo/internal/model/entity"
 	sysin "hotgo/internal/model/input/financein"
-
-	"github.com/gogf/gf/v2/database/gdb"
 )
 
 type (
@@ -48,7 +47,10 @@ type (
 		ImportCode(ctx context.Context, inp sysin.FinanceImportCodeInp) (err error)
 	}
 	ISysStockIndicator interface {
-		//Boll(ctx context.Context, code string, klineType, klineNum, multiple int) (result *sys.BollResult, err error)
+		// Kline K线
+		Kline(ctx context.Context, code string, klineType, klineNum int) (klineList []*entity.FinanceKline, err error)
+		// Boll boll带
+		Boll(ctx context.Context, code string, klineType, klineNum, multiple int) (result *entity.FinanceBoll, err error)
 	}
 	ISysTestFinance interface {
 		// ConvertToQueryString 将 FinanceAlltickRequest 结构体转换为 JSON 查询字符串

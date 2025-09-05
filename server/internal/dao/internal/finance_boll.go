@@ -13,10 +13,9 @@ import (
 
 // FinanceBollDao is the data access object for the table hg_finance_boll.
 type FinanceBollDao struct {
-	table    string             // table is the underlying table name of the DAO.
-	group    string             // group is the database configuration group name of the current DAO.
-	columns  FinanceBollColumns // columns contains all the column names of Table for convenient usage.
-	handlers []gdb.ModelHandler // handlers for customized model modification.
+	table   string             // table is the underlying table name of the DAO.
+	group   string             // group is the database configuration group name of the current DAO.
+	columns FinanceBollColumns // columns contains all the column names of Table for convenient usage.
 }
 
 // FinanceBollColumns defines and stores column names for the table hg_finance_boll.
@@ -34,6 +33,7 @@ type FinanceBollColumns struct {
 	KlineNum          string // k线根数
 	Multiple          string // 标准差倍数
 	CreatedAt         string // 创建时间
+	Key               string // timestamp和code组合
 }
 
 // financeBollColumns holds the columns for the table hg_finance_boll.
@@ -51,15 +51,15 @@ var financeBollColumns = FinanceBollColumns{
 	KlineNum:          "kline_num",
 	Multiple:          "multiple",
 	CreatedAt:         "created_at",
+	Key:               "key",
 }
 
 // NewFinanceBollDao creates and returns a new DAO object for table data access.
-func NewFinanceBollDao(handlers ...gdb.ModelHandler) *FinanceBollDao {
+func NewFinanceBollDao() *FinanceBollDao {
 	return &FinanceBollDao{
-		group:    "default",
-		table:    "hg_finance_boll",
-		columns:  financeBollColumns,
-		handlers: handlers,
+		group:   "default",
+		table:   "hg_finance_boll",
+		columns: financeBollColumns,
 	}
 }
 
@@ -85,11 +85,7 @@ func (dao *FinanceBollDao) Group() string {
 
 // Ctx creates and returns a Model for the current DAO. It automatically sets the context for the current operation.
 func (dao *FinanceBollDao) Ctx(ctx context.Context) *gdb.Model {
-	model := dao.DB().Model(dao.table)
-	for _, handler := range dao.handlers {
-		model = handler(model)
-	}
-	return model.Safe().Ctx(ctx)
+	return dao.DB().Model(dao.table).Safe().Ctx(ctx)
 }
 
 // Transaction wraps the transaction logic using function f.

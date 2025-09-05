@@ -23,4 +23,5 @@ type FinanceKline struct {
 	Volume     interface{} // 该K线成交数量
 	Turnover   interface{} // 该K线成交金额
 	CreatedAt  *gtime.Time // 创建时间
+	Key        interface{} // 唯一key，timestamp和code组合
 }
