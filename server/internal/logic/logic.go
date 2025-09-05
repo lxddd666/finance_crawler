@@ -8,6 +8,7 @@ import (
 	_ "hotgo/internal/logic/admin"
 	_ "hotgo/internal/logic/common"
 	_ "hotgo/internal/logic/finance"
+	_ "hotgo/internal/logic/finance/indicator"
 	_ "hotgo/internal/logic/hook"
 	_ "hotgo/internal/logic/middleware"
 	_ "hotgo/internal/logic/pay"

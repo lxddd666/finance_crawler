@@ -15,6 +15,7 @@ import (
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gctx"
 	"github.com/gogf/gf/v2/util/gconv"
+	"hotgo/internal/consts"
 	"hotgo/internal/dao"
 	"hotgo/internal/library/hgorm/handler"
 	"hotgo/internal/model/entity"
@@ -214,7 +215,7 @@ func (s *sSysTestFinance) Status(ctx context.Context, in *sysin.TestFinanceStatu
 
 // Start 更新测试分类状态
 func (s *sSysTestFinance) Start(ctx context.Context) error {
-	//service.SysStockIndicator().Boll(ctx, "AAPL.US", 8, 20, 2)
+	service.SysStockIndicator().Kline(ctx, "000001.SH", consts.KlineTypeDay, 500)
 	return nil
 }
 
