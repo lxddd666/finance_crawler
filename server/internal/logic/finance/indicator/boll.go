@@ -6,16 +6,18 @@ import (
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/util/gconv"
 	"hotgo/internal/dao"
-	"hotgo/internal/logic/alltick"
+	"hotgo/internal/logic/sina"
+	"hotgo/internal/model/httpReq"
 	"hotgo/internal/model/result"
+	"hotgo/utility/format"
 
 	"hotgo/internal/model/entity"
 	"math"
 )
 
 // Boll boll带
-func (s *sSysStockIndicator) Boll(ctx context.Context, code string, klineType, klineNum, multiple int) (boll *entity.FinanceBoll, err error) {
-	klineList, err := s.bollReq(ctx, code, klineType, klineNum)
+func (s *sSysStockIndicator) Boll(ctx context.Context, code, ma string, scale, datalen, multiple int) (boll *entity.FinanceBoll, err error) {
+	klineList, err := s.bollReq(ctx, code, ma, scale, datalen)
 	if err != nil {
 		return
 	}
@@ -31,8 +33,6 @@ func (s *sSysStockIndicator) Boll(ctx context.Context, code string, klineType, k
 	boll = &entity.FinanceBoll{
 		Code:              code,
 		KlineId:           id,
-		KlineType:         klineType,
-		KlineNum:          klineNum,
 		Multiple:          multiple,
 		Timestamp:         result.Timestamp,
 		MiddleBand:        result.MiddleBand,
@@ -40,7 +40,8 @@ func (s *sSysStockIndicator) Boll(ctx context.Context, code string, klineType, k
 		LowerBand:         result.LowerBand,
 		StandardDeviation: result.StandardDeviation,
 		ClosePrice:        result.ClosePrice,
-		Key:               fmt.Sprintf("%s%d", code, result.Timestamp),
+		Scale:             scale,
+		Key:               lastKline.Key,
 	}
 	_, _ = dao.FinanceBoll.Ctx(ctx).InsertIgnore(boll)
 	return
@@ -84,35 +85,31 @@ func (s *sSysStockIndicator) CalculateBoll(data []*entity.FinanceKline, multiple
 }
 
 // bollReq 请求
-func (s *sSysStockIndicator) bollReq(ctx context.Context, code string, klineType, klineNum int) (respData []*entity.FinanceKline, err error) {
-	////Code:              code,
-	////		KlineType:         8,
-	////		KlineTimestampEnd: 0,
-	////		QueryKlineNum:     20,
-	////		AdjustType:        0,
-	//
-	response, err := alltick.GetKlineData(ctx, &entity.FinanceAlltickRequest{
-		Code:              code,
-		KlineType:         klineType,
-		KlineTimestampEnd: 0,
-		QueryKlineNum:     klineNum,
-		AdjustType:        0,
+func (s *sSysStockIndicator) bollReq(ctx context.Context, code, ma string, scale, datalen int) (respData []*entity.FinanceKline, err error) {
+
+	KlineList, err := sina.GetKlineData(ctx, &httpReq.SinaHttpReq{
+		Symbol:  code,
+		Scale:   scale,
+		Ma:      ma,
+		Datalen: datalen,
 	})
+
+	//KlineList, err = s.Kline(ctx, code, ma, scale, datalen)
 	if err != nil {
 		return
 	}
 
 	respData = make([]*entity.FinanceKline, 0)
-	for _, kline := range response.Data.KlineList {
+	for _, kline := range KlineList {
 		respData = append(respData, &entity.FinanceKline{
-			Code:       response.Data.Code,
-			Timestamp:  gconv.Int64(kline.Timestamp),
-			OpenPrice:  gconv.Float64(kline.OpenPrice),
-			ClosePrice: gconv.Float64(kline.ClosePrice),
-			HighPrice:  gconv.Float64(kline.HighPrice),
-			LowPrice:   gconv.Float64(kline.LowPrice),
+			Code:       code,
+			Timestamp:  format.DayStrToTimestamp(kline.Day),
+			OpenPrice:  gconv.Float64(kline.Open),
+			ClosePrice: gconv.Float64(kline.Close),
+			HighPrice:  gconv.Float64(kline.High),
+			LowPrice:   gconv.Float64(kline.Low),
 			Volume:     gconv.Int64(kline.Volume),
-			Turnover:   gconv.Float64(kline.Turnover),
+			Key:        fmt.Sprintf("%s%d", code, format.DayStrToTimestamp(kline.Day)),
 		})
 	}
 	if len(respData) == 0 {

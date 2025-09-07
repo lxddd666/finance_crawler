@@ -11,6 +11,7 @@ import (
 	"hotgo/internal/library/hgorm/handler"
 	"hotgo/internal/model/entity"
 	sysin "hotgo/internal/model/input/financein"
+	"hotgo/internal/model/result"
 )
 
 type (
@@ -48,9 +49,10 @@ type (
 	}
 	ISysStockIndicator interface {
 		// Kline K线
-		Kline(ctx context.Context, code string, klineType, klineNum int) (klineList []*entity.FinanceKline, err error)
+		Kline(ctx context.Context, code, ma string, scale, datalen int) (klineList []*entity.FinanceKline, err error)
 		// Boll boll带
-		Boll(ctx context.Context, code string, klineType, klineNum, multiple int) (result *entity.FinanceBoll, err error)
+		Boll(ctx context.Context, code, ma string, scale, datalen, multiple int) (result *entity.FinanceBoll, err error)
+		CalculateBoll(data []*entity.FinanceKline, multiple int) (resp *result.BollResult, lastKline *entity.FinanceKline, err error)
 	}
 	ISysTestFinance interface {
 		// ConvertToQueryString 将 FinanceAlltickRequest 结构体转换为 JSON 查询字符串

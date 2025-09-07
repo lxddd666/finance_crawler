@@ -24,4 +24,6 @@ type FinanceBoll struct {
 	Multiple          int         `json:"multiple"          orm:"multiple"           description:"标准差倍数"`
 	CreatedAt         *gtime.Time `json:"createdAt"         orm:"created_at"         description:"创建时间"`
 	Key               string      `json:"key"               orm:"key"                description:"timestamp和code组合"`
+	Day               string      `json:"day"               orm:"day"                description:"日期"`
+	Scale             int         `json:"scale"             orm:"scale"              description:"分钟一条k线"`
 }

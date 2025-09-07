@@ -26,4 +26,6 @@ type FinanceBoll struct {
 	Multiple          interface{} // 标准差倍数
 	CreatedAt         *gtime.Time // 创建时间
 	Key               interface{} // timestamp和code组合
+	Day               interface{} // 日期
+	Scale             interface{} // 分钟一条k线
 }

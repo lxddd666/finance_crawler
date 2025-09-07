@@ -5,37 +5,63 @@ import (
 	"fmt"
 	"github.com/gogf/gf/v2/util/gconv"
 	"hotgo/internal/dao"
-	"hotgo/internal/logic/alltick"
+	"hotgo/internal/logic/sina"
 	"hotgo/internal/model/entity"
+	"hotgo/internal/model/httpReq"
+	"hotgo/utility/format"
+	"log"
 )
 
 // Kline k线
-func (s *sSysStockIndicator) Kline(ctx context.Context, code string, klineType, klineNum int) (klineList []*entity.FinanceKline, err error) {
-	response, err := alltick.GetKlineData(ctx, &entity.FinanceAlltickRequest{
-		Code:              code,
-		KlineType:         klineType,
-		KlineTimestampEnd: 0,
-		QueryKlineNum:     klineNum,
-		AdjustType:        0,
+func (s *sSysStockIndicator) Kline(ctx context.Context, code, ma string, scale, datalen int) (klineList []*entity.FinanceKline, err error) {
+	KlineList, err := sina.GetKlineData(ctx, &httpReq.SinaHttpReq{
+		Symbol:  code,
+		Scale:   scale,
+		Ma:      ma,
+		Datalen: datalen,
 	})
 	if err != nil {
 		return
 	}
-	klineListResp := response.Data.KlineList
 
-	for _, kline := range klineListResp {
+	for _, kline := range KlineList {
 		klineList = append(klineList, &entity.FinanceKline{
-			Code:       response.Data.Code,
-			Timestamp:  gconv.Int64(kline.Timestamp),
-			OpenPrice:  gconv.Float64(kline.OpenPrice),
-			ClosePrice: gconv.Float64(kline.ClosePrice),
-			HighPrice:  gconv.Float64(kline.HighPrice),
-			LowPrice:   gconv.Float64(kline.LowPrice),
+			Code:       code,
+			Timestamp:  format.DayStrToTimestamp(kline.Day),
+			OpenPrice:  gconv.Float64(kline.Open),
+			ClosePrice: gconv.Float64(kline.Close),
+			HighPrice:  gconv.Float64(kline.High),
+			LowPrice:   gconv.Float64(kline.Low),
 			Volume:     gconv.Int64(kline.Volume),
-			Turnover:   gconv.Float64(kline.Turnover),
-			Key:        fmt.Sprintf("%s%s", code, kline.Timestamp),
+			Scale:      scale,
+			Day:        kline.Day,
+			Key:        fmt.Sprintf("%s%d", code, format.DayStrToTimestamp(kline.Day)),
 		})
 	}
-	_, err = dao.FinanceKline.Ctx(ctx).InsertIgnore(klineList)
+
+	err = BatchInsertKline(ctx, klineList, code)
 	return
+}
+
+func BatchInsertKline(ctx context.Context, klineList []*entity.FinanceKline, code string) error {
+	batchSize := 300
+	total := len(klineList)
+
+	for i := 0; i < total; i += batchSize {
+		end := i + batchSize
+		if end > total {
+			end = total
+		}
+
+		batch := klineList[i:end]
+		_, err := dao.FinanceKline.Ctx(ctx).InsertIgnore(batch)
+		if err != nil {
+			return fmt.Errorf("批量插入失败，批次 %d-%d: %v", i, end-1, err)
+		}
+
+		// 可选：添加日志输出进度
+		log.Printf("已插入[%s] %d-%d 条数据，总共 %d 条", code, i, end-1, total)
+	}
+
+	return nil
 }

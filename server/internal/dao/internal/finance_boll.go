@@ -34,6 +34,8 @@ type FinanceBollColumns struct {
 	Multiple          string // 标准差倍数
 	CreatedAt         string // 创建时间
 	Key               string // timestamp和code组合
+	Day               string // 日期
+	Scale             string // 分钟一条k线
 }
 
 // financeBollColumns holds the columns for the table hg_finance_boll.
@@ -52,6 +54,8 @@ var financeBollColumns = FinanceBollColumns{
 	Multiple:          "multiple",
 	CreatedAt:         "created_at",
 	Key:               "key",
+	Day:               "day",
+	Scale:             "scale",
 }
 
 // NewFinanceBollDao creates and returns a new DAO object for table data access.

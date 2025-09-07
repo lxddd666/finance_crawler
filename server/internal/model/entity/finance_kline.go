@@ -22,4 +22,6 @@ type FinanceKline struct {
 	Turnover   float64     `json:"turnover"   orm:"turnover"    description:"该K线成交金额"`
 	CreatedAt  *gtime.Time `json:"createdAt"  orm:"created_at"  description:"创建时间"`
 	Key        string      `json:"key"        orm:"key"         description:"唯一key，timestamp和code组合"`
+	Scale      int         `json:"scale"      orm:"scale"       description:"多少分钟一根K线"`
+	Day        string      `json:"day"        orm:"day"         description:"日期"`
 }

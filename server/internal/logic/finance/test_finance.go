@@ -14,6 +14,7 @@ import (
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gctx"
+	"github.com/gogf/gf/v2/text/gstr"
 	"github.com/gogf/gf/v2/util/gconv"
 	"hotgo/internal/consts"
 	"hotgo/internal/dao"
@@ -24,6 +25,7 @@ import (
 	"hotgo/internal/service"
 	"hotgo/utility/convert"
 	"hotgo/utility/excel"
+	"time"
 )
 
 type sSysTestFinance struct{}
@@ -215,7 +217,39 @@ func (s *sSysTestFinance) Status(ctx context.Context, in *sysin.TestFinanceStatu
 
 // Start 更新测试分类状态
 func (s *sSysTestFinance) Start(ctx context.Context) error {
-	service.SysStockIndicator().Kline(ctx, "000001.SH", consts.KlineTypeDay, 500)
+	var codeList []*entity.FinanceCode
+	err := dao.FinanceCode.Ctx(ctx).Scan(&codeList)
+	if err != nil {
+		return err
+	}
+
+	for _, code := range codeList {
+		codeStr := fmt.Sprintf("%s%s", gstr.ToLower(code.Exchange), code.Code)
+		klineList, gErr := service.SysStockIndicator().Kline(ctx, codeStr, consts.MaNo, consts.ScaleDay, 20)
+		if gErr != nil {
+			continue
+		}
+		result, lastKline, gErr := service.SysStockIndicator().CalculateBoll(klineList, 2)
+		if gErr != nil {
+			continue
+		}
+
+		// 插入数据库
+		boll := &entity.FinanceBoll{
+			Code:              code.Code,
+			Multiple:          2,
+			Timestamp:         result.Timestamp,
+			MiddleBand:        result.MiddleBand,
+			UpperBand:         result.UpperBand,
+			LowerBand:         result.LowerBand,
+			StandardDeviation: result.StandardDeviation,
+			ClosePrice:        result.ClosePrice,
+			Scale:             consts.ScaleDay,
+			Key:               lastKline.Key,
+		}
+		_, _ = dao.FinanceBoll.Ctx(ctx).InsertIgnore(boll)
+		time.Sleep(500 * time.Millisecond)
+	}
 	return nil
 }
 

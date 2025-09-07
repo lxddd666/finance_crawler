@@ -32,6 +32,8 @@ type FinanceKlineColumns struct {
 	Turnover   string // 该K线成交金额
 	CreatedAt  string // 创建时间
 	Key        string // 唯一key，timestamp和code组合
+	Scale      string // 多少分钟一根K线
+	Day        string // 日期
 }
 
 // financeKlineColumns holds the columns for the table hg_finance_kline.
@@ -48,6 +50,8 @@ var financeKlineColumns = FinanceKlineColumns{
 	Turnover:   "turnover",
 	CreatedAt:  "created_at",
 	Key:        "key",
+	Scale:      "scale",
+	Day:        "day",
 }
 
 // NewFinanceKlineDao creates and returns a new DAO object for table data access.
