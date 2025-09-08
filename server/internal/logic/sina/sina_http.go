@@ -2,6 +2,8 @@ package sina
 
 import (
 	"context"
+	"math/rand"
+	"time"
 
 	"fmt"
 	"github.com/gogf/gf/v2/errors/gerror"
