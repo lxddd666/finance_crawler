@@ -105,3 +105,54 @@ func BuildSinaURL(req *httpReq.SinaHttpReq) (string, error) {
 
 	return "", gerror.New("拼接url失败")
 }
+
+func randomProxy() string {
+	proxyList := []string{
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-zOoySxTi-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-XtiwhGyN-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-8BvtGGNn-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-n0N0oCLk-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-77Q9AYKj-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-hOIO4zC7-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-Swud9ZUo-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-DF5aHcp5-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-cbmKL9KW-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-mAUNmd0V-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-ZzHMxol5-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-JoXwb6Sf-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-rMeIbruo-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-iVUqdCKa-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-EwYRLqEg-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-ifUNP4jH-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-mlp5oKEd-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-c3BB78FN-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-x8O9SpCg-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-BB48oQ2M-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-VTQu1kAh-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-aSrPlV1f-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-4fNb76Oj-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-UHX7CwgK-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-GKVjoYiu-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-FpAq0GTW-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-N2MoFfeI-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-bcvKC0BH-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-7Dp3uLkm-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-Vyf57PmV-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-qp7tkHFd-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-adcfpPXf-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-EI0OJY1G-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-iSNODiul-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-cKI6ajSG-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-qibi0axb-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-0PTMC7fS-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-BFF4jKon-sessTime-15:TGMMlg2H",
+		"na.proxys5.net:6200:81794984-zone-custom-region-US-state-alaska-sessid-zqg0eHap-sessTime-15:TGMMlg2H",
+	}
+
+	// 使用当前时间作为随机种子
+	rand.Seed(time.Now().UnixNano())
+
+	// 随机选择一个代理
+	randomIndex := rand.Intn(len(proxyList))
+	return proxyList[randomIndex]
+}
