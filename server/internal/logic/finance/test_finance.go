@@ -225,7 +225,7 @@ func (s *sSysTestFinance) Start(ctx context.Context) error {
 
 	for _, code := range codeList {
 		codeStr := fmt.Sprintf("%s%s", gstr.ToLower(code.Exchange), code.Code)
-		klineList, gErr := service.SysStockIndicator().Kline(ctx, codeStr, consts.MaNo, consts.ScaleDay, 20)
+		klineList, gErr := service.SysStockIndicator().Kline(ctx, codeStr, consts.MaNo, consts.ScaleDay, 20, false)
 		if gErr != nil {
 			continue
 		}

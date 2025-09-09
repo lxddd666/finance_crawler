@@ -46,10 +46,12 @@ type (
 		View(ctx context.Context, in *sysin.FinanceCodeViewInp) (res *sysin.FinanceCodeViewModel, err error)
 		// ImportCode 导入股票代码
 		ImportCode(ctx context.Context, inp sysin.FinanceImportCodeInp) (err error)
+		// CodeDailyKlineStart 开始获取股票代码
+		CodeDailyKlineStart(ctx context.Context) error
 	}
 	ISysStockIndicator interface {
 		// Kline K线
-		Kline(ctx context.Context, code, ma string, scale, datalen int) (klineList []*entity.FinanceKline, err error)
+		Kline(ctx context.Context, code string, ma string, scale int, datalen int, proxyFlag bool) (klineList []*entity.FinanceKline, err error)
 		// Boll boll带
 		Boll(ctx context.Context, code, ma string, scale, datalen, multiple int) (result *entity.FinanceBoll, err error)
 		CalculateBoll(data []*entity.FinanceKline, multiple int) (resp *result.BollResult, lastKline *entity.FinanceKline, err error)

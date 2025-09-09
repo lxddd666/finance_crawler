@@ -65,3 +65,10 @@ type ImportCodeReq struct {
 }
 
 type ImportCodeRes struct{}
+
+// CodeDailyKlineStartReq 股票每日获取
+type CodeDailyKlineStartReq struct {
+	g.Meta `path:"/financeCode/codeDailyKline" method:"post" tags:"股票代码" summary:"股票每日获取"`
+}
+
+type CodeDailyKlineStartRes struct{}

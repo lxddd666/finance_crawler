@@ -2,6 +2,8 @@ package sina
 
 import (
 	"context"
+	"golang.org/x/net/proxy"
+	"io"
 	"math/rand"
 	"time"
 
@@ -64,6 +66,45 @@ func GetKlineData(ctx context.Context, sinaReq *httpReq.SinaHttpReq) (response [
 		return
 	}
 
+	return
+}
+
+func GetKlineDataProxy(ctx context.Context, sinaReq *httpReq.SinaHttpReq) (response []*SinaResult, err error) {
+	url := "http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData"
+
+	log.Println("请求内容 proxy：", url)
+	queryStr, err := BuildSinaURL(sinaReq)
+	url = fmt.Sprintf("%s?%s", url, queryStr)
+	// 创建SOCKS5拨号器
+	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:7890", nil, proxy.Direct)
+	if err != nil {
+		panic(err)
+	}
+
+	// 创建HTTP传输层
+	transport := &http.Transport{
+		Dial: dialer.Dial,
+	}
+
+	// 创建HTTP客户端
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   30 * time.Second,
+	}
+
+	// 发送请求
+	resp, err := client.Get(url)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("响应内容:\n%s\n", string(body))
 	return
 }
 

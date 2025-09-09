@@ -71,3 +71,8 @@ func (c *cFinanceCode) ImportCode(ctx context.Context, req *financecode.ImportCo
 	err = service.SysFinanceCode().ImportCode(ctx, req.FinanceImportCodeInp)
 	return
 }
+
+func (c *cFinanceCode) CodeDailyKlineStart(ctx context.Context, req *financecode.CodeDailyKlineStartReq) (res *financecode.CodeDailyKlineStartRes, err error) {
+	err = service.SysFinanceCode().CodeDailyKlineStart(ctx)
+	return
+}

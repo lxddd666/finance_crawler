@@ -3,6 +3,7 @@ package sys
 import (
 	"context"
 	"fmt"
+	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/util/gconv"
 	"hotgo/internal/dao"
 	"hotgo/internal/logic/sina"
@@ -13,15 +14,28 @@ import (
 )
 
 // Kline k线
-func (s *sSysStockIndicator) Kline(ctx context.Context, code, ma string, scale, datalen int) (klineList []*entity.FinanceKline, err error) {
-	KlineList, err := sina.GetKlineData(ctx, &httpReq.SinaHttpReq{
-		Symbol:  code,
-		Scale:   scale,
-		Ma:      ma,
-		Datalen: datalen,
-	})
-	if err != nil {
-		return
+func (s *sSysStockIndicator) Kline(ctx context.Context, code, ma string, scale, datalen int, proxyFlag bool) (klineList []*entity.FinanceKline, err error) {
+	var KlineList []*sina.SinaResult
+	if !proxyFlag {
+		KlineList, err = sina.GetKlineData(ctx, &httpReq.SinaHttpReq{
+			Symbol:  code,
+			Scale:   scale,
+			Ma:      ma,
+			Datalen: datalen,
+		})
+		if err != nil {
+			return
+		}
+	} else {
+		KlineList, err = sina.GetKlineDataProxy(ctx, &httpReq.SinaHttpReq{
+			Symbol:  code,
+			Scale:   scale,
+			Ma:      ma,
+			Datalen: datalen,
+		})
+		if err != nil {
+			return
+		}
 	}
 
 	for _, kline := range KlineList {
@@ -35,10 +49,13 @@ func (s *sSysStockIndicator) Kline(ctx context.Context, code, ma string, scale, 
 			Volume:     gconv.Int64(kline.Volume),
 			Scale:      scale,
 			Day:        kline.Day,
-			Key:        fmt.Sprintf("%s%d", code, format.DayStrToTimestamp(kline.Day)),
+			Key:        fmt.Sprintf("%s%s", code, kline.Day),
 		})
 	}
-
+	if len(klineList) == 0 {
+		err = gerror.New("获取数据为空，请查看是否ip被禁止")
+		return
+	}
 	err = BatchInsertKline(ctx, klineList, code)
 	return
 }
