@@ -1,0 +1,85 @@
+// ==========================================================================
+// Code generated and maintained by GoFrame CLI tool. DO NOT EDIT.
+// ==========================================================================
+
+package internal
+
+import (
+	"context"
+
+	"github.com/gogf/gf/v2/database/gdb"
+	"github.com/gogf/gf/v2/frame/g"
+)
+
+// FinanceCodeDailyDao is the data access object for the table hg_finance_code_daily.
+type FinanceCodeDailyDao struct {
+	table   string                  // table is the underlying table name of the DAO.
+	group   string                  // group is the database configuration group name of the current DAO.
+	columns FinanceCodeDailyColumns // columns contains all the column names of Table for convenient usage.
+}
+
+// FinanceCodeDailyColumns defines and stores column names for the table hg_finance_code_daily.
+type FinanceCodeDailyColumns struct {
+	Id        string // 分类ID
+	Code      string // 代码
+	Name      string // 名称
+	Exchange  string // 交易所
+	Day       string // 日期
+	Timestamp string // 时间戳
+	Status    string // 0未开始 1完成 -1失败
+}
+
+// financeCodeDailyColumns holds the columns for the table hg_finance_code_daily.
+var financeCodeDailyColumns = FinanceCodeDailyColumns{
+	Id:        "id",
+	Code:      "code",
+	Name:      "name",
+	Exchange:  "exchange",
+	Day:       "day",
+	Timestamp: "timestamp",
+	Status:    "status",
+}
+
+// NewFinanceCodeDailyDao creates and returns a new DAO object for table data access.
+func NewFinanceCodeDailyDao() *FinanceCodeDailyDao {
+	return &FinanceCodeDailyDao{
+		group:   "default",
+		table:   "hg_finance_code_daily",
+		columns: financeCodeDailyColumns,
+	}
+}
+
+// DB retrieves and returns the underlying raw database management object of the current DAO.
+func (dao *FinanceCodeDailyDao) DB() gdb.DB {
+	return g.DB(dao.group)
+}
+
+// Table returns the table name of the current DAO.
+func (dao *FinanceCodeDailyDao) Table() string {
+	return dao.table
+}
+
+// Columns returns all column names of the current DAO.
+func (dao *FinanceCodeDailyDao) Columns() FinanceCodeDailyColumns {
+	return dao.columns
+}
+
+// Group returns the database configuration group name of the current DAO.
+func (dao *FinanceCodeDailyDao) Group() string {
+	return dao.group
+}
+
+// Ctx creates and returns a Model for the current DAO. It automatically sets the context for the current operation.
+func (dao *FinanceCodeDailyDao) Ctx(ctx context.Context) *gdb.Model {
+	return dao.DB().Model(dao.table).Safe().Ctx(ctx)
+}
+
+// Transaction wraps the transaction logic using function f.
+// It rolls back the transaction and returns the error if function f returns a non-nil error.
+// It commits the transaction and returns nil if function f returns nil.
+//
+// Note: Do not commit or roll back the transaction in function f,
+// as it is automatically handled by this function.
+func (dao *FinanceCodeDailyDao) Transaction(ctx context.Context, f func(ctx context.Context, tx gdb.TX) error) (err error) {
+	return dao.Ctx(ctx).Transaction(ctx, f)
+}

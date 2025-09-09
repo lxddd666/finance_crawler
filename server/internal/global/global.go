@@ -9,4 +9,6 @@ import "hotgo/internal/model/entity"
 
 var (
 	FinanceConfig *entity.FinanceConfig
+	Day           string
+	Timestamp     int64
 )

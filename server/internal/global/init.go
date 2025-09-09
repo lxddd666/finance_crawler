@@ -20,6 +20,7 @@ import (
 	"github.com/gogf/gf/v2/text/gstr"
 	"github.com/gogf/gf/v2/util/gmode"
 	"hotgo/internal/consts"
+	"hotgo/internal/dao"
 	"hotgo/internal/library/cache"
 	"hotgo/internal/library/queue"
 	"hotgo/internal/model/entity"
@@ -29,6 +30,7 @@ import (
 	"hotgo/utility/validate"
 	"runtime"
 	"strings"
+	"time"
 )
 
 func Init(ctx context.Context) {
@@ -63,6 +65,9 @@ func Init(ctx context.Context) {
 
 	// 财经init
 	_ = FinanceInit(ctx)
+
+	// 获取当前时间未执行code
+	_ = GetDayData(ctx)
 }
 
 // LoggingServeLogHandler 服务日志处理
@@ -172,5 +177,56 @@ func SetGFMode(ctx context.Context) {
 
 func FinanceInit(ctx context.Context) (err error) {
 	_, err = service.SysConfig().FinanceConfig(ctx)
+	return
+}
+
+func GetDayData(ctx context.Context) (err error) {
+	today := time.Now().Truncate(24 * time.Hour)
+
+	// 获取当前时间
+	Timestamp = today.Unix()
+
+	Day = today.Format("2006-01-02")
+
+	// 获取当前任务
+	flag, _ := dao.FinanceCodeDaily.Ctx(ctx).Where(dao.FinanceCodeDaily.Columns().Day, Day).Exist()
+	if !flag {
+		// 删除过去的
+		_, _ = dao.FinanceCodeDaily.Ctx(ctx).Delete()
+		// 获取所有
+		var codeList []entity.FinanceCode
+		var codeDaily []entity.FinanceCodeDaily
+		err = dao.FinanceCode.Ctx(ctx).Scan(&codeList)
+		if err != nil {
+			return
+		}
+		for _, code := range codeList {
+			codeDaily = append(codeDaily, entity.FinanceCodeDaily{
+				Code:      code.Code,
+				Name:      code.Name,
+				Exchange:  code.Exchange,
+				Day:       Day,
+				Timestamp: Timestamp,
+				Status:    consts.TaskNotStarted,
+			})
+		}
+		if len(codeDaily) > 0 {
+			batchSize := 500
+
+			for i := 0; i < len(codeDaily); i += batchSize {
+				end := i + batchSize
+				if end > len(codeDaily) {
+					end = len(codeDaily)
+				}
+
+				batch := codeDaily[i:end]
+				_, err = dao.FinanceCodeDaily.Ctx(ctx).Insert(batch)
+				if err != nil {
+					// 处理错误
+					return
+				}
+			}
+		}
+	}
 	return
 }
