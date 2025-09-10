@@ -261,8 +261,49 @@ func TestProxy(t *testing.T) {
 }
 
 func TestProxyV2(t *testing.T) {
+
+	// socks5://fans007:fans888@149.28.137.94:40390
 	// 创建SOCKS5拨号器
 	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:7890", nil, proxy.Direct)
+	if err != nil {
+		panic(err)
+	}
+
+	// 创建HTTP传输层
+	transport := &http.Transport{
+		Dial: dialer.Dial,
+	}
+
+	// 创建HTTP客户端
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   30 * time.Second,
+	}
+
+	// 发送请求
+	resp, err := client.Get("http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData?symbol=sz002095&scale=240&ma=no&datalen=1023")
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("响应内容:\n%s\n", string(body))
+}
+
+func TestProxyV3(t *testing.T) {
+	//socks5://fans007:fans888@149.28.137.94:40390
+	//socks5://fans007:fans888@149.28.159.163:39661
+	// 创建带认证的SOCKS5拨号器
+	//auth := &proxy.Auth{
+	//	User:     "fans007",
+	//	Password: "fans888",
+	//}
+	dialer, err := proxy.SOCKS5("tcp", "68.71.249.153:48606", nil, proxy.Direct)
 	if err != nil {
 		panic(err)
 	}

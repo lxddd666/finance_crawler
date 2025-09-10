@@ -192,7 +192,7 @@ func GetDayData(ctx context.Context) (err error) {
 	flag, _ := dao.FinanceCodeDaily.Ctx(ctx).Where(dao.FinanceCodeDaily.Columns().Day, Day).Exist()
 	if !flag {
 		// 删除过去的
-		_, _ = dao.FinanceCodeDaily.Ctx(ctx).Delete()
+		_, err = dao.FinanceCodeDaily.Ctx(ctx).Where("1=1").Delete()
 		// 获取所有
 		var codeList []entity.FinanceCode
 		var codeDaily []entity.FinanceCodeDaily

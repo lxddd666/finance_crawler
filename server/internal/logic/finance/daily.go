@@ -11,7 +11,7 @@ import (
 	"hotgo/internal/model/entity"
 	"hotgo/internal/service"
 	"hotgo/utility/simple"
-	"time"
+	"sync"
 )
 
 func (s *sSysFinanceCode) CodeDailyKlineStart(ctx context.Context) (err error) {
@@ -23,24 +23,32 @@ func (s *sSysFinanceCode) CodeDailyKlineStart(ctx context.Context) (err error) {
 			return
 		}
 		proxyFlag := true
+		// 创建大小为5的并发限制通道
+		concurrencyLimit := 15
+		semaphore := make(chan struct{}, concurrencyLimit)
+		wg := sync.WaitGroup{}
 		for _, code := range codeDaily {
-			// sz002095
-			stockCode := fmt.Sprintf("%s%s", gstr.ToLower(code.Exchange), code.Code)
-			_, gErr := service.SysStockIndicator().Kline(ctx, stockCode, consts.MaNo, consts.ScaleDay, 50, proxyFlag)
-			if gErr != nil {
-				_, _ = dao.FinanceCodeDaily.Ctx(ctx).Where(dao.FinanceCodeDaily.Columns().Code, code.Code).Update(do.FinanceCodeDaily{Status: consts.TaskFail})
-
-				if !proxyFlag {
-					// 切换代理爬
-					proxyFlag = true
+			wg.Add(1)
+			// 获取信号量，控制并发数
+			semaphore <- struct{}{}
+			simple.SafeGo(gctx.New(), func(ctx context.Context) {
+				defer wg.Done()
+				defer func() {
+					// 释放信号量
+					<-semaphore
+				}()
+				// sz002095
+				stockCode := fmt.Sprintf("%s%s", gstr.ToLower(code.Exchange), code.Code)
+				_, gErr := service.SysStockIndicator().Kline(ctx, stockCode, consts.MaNo, consts.ScaleDay, 50, proxyFlag)
+				if gErr != nil {
+					_, _ = dao.FinanceCodeDaily.Ctx(ctx).Where(dao.FinanceCodeDaily.Columns().Code, code.Code).Update(do.FinanceCodeDaily{Status: consts.TaskFail})
 				} else {
-					time.Sleep(6 * time.Second)
+					// 爬取数据成功
+					_, _ = dao.FinanceCodeDaily.Ctx(ctx).Where(dao.FinanceCodeDaily.Columns().Code, code.Code).Update(do.FinanceCodeDaily{Status: consts.TaskComplete})
 				}
-			} else {
-				// 爬取数据成功
-				_, _ = dao.FinanceCodeDaily.Ctx(ctx).Where(dao.FinanceCodeDaily.Columns().Code, code.Code).Update(do.FinanceCodeDaily{Status: consts.TaskComplete})
-			}
+			})
 		}
+		wg.Wait()
 	})
 	return
 }
