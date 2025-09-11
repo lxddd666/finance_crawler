@@ -1,0 +1,101 @@
+// ==========================================================================
+// Code generated and maintained by GoFrame CLI tool. DO NOT EDIT.
+// ==========================================================================
+
+package internal
+
+import (
+	"context"
+
+	"github.com/gogf/gf/v2/database/gdb"
+	"github.com/gogf/gf/v2/frame/g"
+)
+
+// FinanceMacdDao is the data access object for the table hg_finance_macd.
+type FinanceMacdDao struct {
+	table   string             // table is the underlying table name of the DAO.
+	group   string             // group is the database configuration group name of the current DAO.
+	columns FinanceMacdColumns // columns contains all the column names of Table for convenient usage.
+}
+
+// FinanceMacdColumns defines and stores column names for the table hg_finance_macd.
+type FinanceMacdColumns struct {
+	Id           string // 分类ID
+	Code         string // code
+	FastPeriod   string // 快线周期
+	SlowPeriod   string // 慢线周期
+	SignalPeriod string // 信号周期
+	Dif          string // EMA12 - EMA26 快线
+	Dea          string // DIF的9日EMA（26+9-1)慢线
+	Macd         string // macd柱子
+	Timestamp    string // 时间戳
+	ClosePrice   string // 收盘价
+	KlineNum     string // k线根数
+	CreatedAt    string // 创建时间
+	Key          string // timestamp和code组合
+	Day          string // 日期
+	Scale        string // 分钟一条k线
+}
+
+// financeMacdColumns holds the columns for the table hg_finance_macd.
+var financeMacdColumns = FinanceMacdColumns{
+	Id:           "id",
+	Code:         "code",
+	FastPeriod:   "fast_period",
+	SlowPeriod:   "slow_period",
+	SignalPeriod: "signal_period",
+	Dif:          "dif",
+	Dea:          "dea",
+	Macd:         "macd",
+	Timestamp:    "timestamp",
+	ClosePrice:   "close_price",
+	KlineNum:     "kline_num",
+	CreatedAt:    "created_at",
+	Key:          "key",
+	Day:          "day",
+	Scale:        "scale",
+}
+
+// NewFinanceMacdDao creates and returns a new DAO object for table data access.
+func NewFinanceMacdDao() *FinanceMacdDao {
+	return &FinanceMacdDao{
+		group:   "default",
+		table:   "hg_finance_macd",
+		columns: financeMacdColumns,
+	}
+}
+
+// DB retrieves and returns the underlying raw database management object of the current DAO.
+func (dao *FinanceMacdDao) DB() gdb.DB {
+	return g.DB(dao.group)
+}
+
+// Table returns the table name of the current DAO.
+func (dao *FinanceMacdDao) Table() string {
+	return dao.table
+}
+
+// Columns returns all column names of the current DAO.
+func (dao *FinanceMacdDao) Columns() FinanceMacdColumns {
+	return dao.columns
+}
+
+// Group returns the database configuration group name of the current DAO.
+func (dao *FinanceMacdDao) Group() string {
+	return dao.group
+}
+
+// Ctx creates and returns a Model for the current DAO. It automatically sets the context for the current operation.
+func (dao *FinanceMacdDao) Ctx(ctx context.Context) *gdb.Model {
+	return dao.DB().Model(dao.table).Safe().Ctx(ctx)
+}
+
+// Transaction wraps the transaction logic using function f.
+// It rolls back the transaction and returns the error if function f returns a non-nil error.
+// It commits the transaction and returns nil if function f returns nil.
+//
+// Note: Do not commit or roll back the transaction in function f,
+// as it is automatically handled by this function.
+func (dao *FinanceMacdDao) Transaction(ctx context.Context, f func(ctx context.Context, tx gdb.TX) error) (err error) {
+	return dao.Ctx(ctx).Transaction(ctx, f)
+}
