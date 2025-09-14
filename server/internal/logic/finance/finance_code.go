@@ -257,10 +257,10 @@ func (b *buffer) Close() error {
 }
 
 // GetAllCode 获取所有code
-func (s *sSysFinanceCode) GetAllCode(ctx context.Context) (list []*entity.FinanceCode, err error) {
+func (s *sSysFinanceCode) GetAllCode(ctx context.Context) (codeList []*entity.FinanceCode, err error) {
 	// 获取每天boll
-	codeList := make([]*entity.FinanceCode, 0)
-	err = dao.FinanceKline.Ctx(ctx).Scan(&codeList)
+	codeList = make([]*entity.FinanceCode, 0)
+	err = dao.FinanceCode.Ctx(ctx).Scan(&codeList)
 	if err != nil {
 		return
 	}

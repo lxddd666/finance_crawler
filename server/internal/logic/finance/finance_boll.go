@@ -1,62 +1,55 @@
+// Package sys
+// @Link  https://github.com/bufanyun/hotgo
+// @Copyright  Copyright (c) 2025 HotGo CLI
+// @Author  Ms <133814250@qq.com>
+// @License  https://github.com/bufanyun/hotgo/blob/master/LICENSE
+// @AutoGenerate Version 2.17.8
 package sys
 
 import (
 	"context"
 	"fmt"
-	"github.com/gogf/gf/v2/errors/gerror"
-	"github.com/gogf/gf/v2/util/gconv"
 	"hotgo/internal/consts"
 	"hotgo/internal/dao"
+	"hotgo/internal/library/hgorm/handler"
 	"hotgo/internal/logic/sina"
+	"hotgo/internal/model/entity"
 	"hotgo/internal/model/httpReq"
 	"hotgo/internal/model/result"
+	"hotgo/internal/service"
 	"hotgo/utility/format"
-
-	"hotgo/internal/model/entity"
 	"math"
+
+	"github.com/gogf/gf/v2/database/gdb"
+	"github.com/gogf/gf/v2/errors/gerror"
+	"github.com/gogf/gf/v2/util/gconv"
 )
 
-// Boll boll带
-func (s *sSysStockIndicator) Boll(ctx context.Context, code, ma string, scale, datalen, multiple int) (boll *entity.FinanceBoll, err error) {
-	klineList, err := s.bollReq(ctx, code, ma, scale, datalen)
-	if err != nil {
-		return
-	}
-	result, lastKline, err := s.CalculateBoll(ctx, klineList, multiple)
-	if err != nil {
-		return
-	}
-	id, err := dao.FinanceKline.Ctx(ctx).InsertAndGetId(lastKline)
-	if err != nil {
-		return
-	}
-	// 插入数据库
-	boll = &entity.FinanceBoll{
-		Code:              code,
-		KlineId:           id,
-		Multiple:          multiple,
-		Timestamp:         result.Timestamp,
-		MiddleBand:        result.MiddleBand,
-		UpperBand:         result.UpperBand,
-		LowerBand:         result.LowerBand,
-		StandardDeviation: result.StandardDeviation,
-		ClosePrice:        result.ClosePrice,
-		Degree:            result.Degree,
-		Scale:             scale,
-		Key:               lastKline.Key,
-	}
-	_, _ = dao.FinanceBoll.Ctx(ctx).InsertIgnore(boll)
-	return
+type sSysFinanceBoll struct{}
+
+func NewSysFinanceBoll() *sSysFinanceBoll {
+	return &sSysFinanceBoll{}
 }
 
-// CalculateBoll 用股票k线计算boll
-func (s *sSysStockIndicator) CalculateBoll(ctx context.Context, data []*entity.FinanceKline, multiple int) (resp *result.BollResult, lastKline *entity.FinanceKline, err error) {
+func init() {
+	service.RegisterSysFinanceBoll(NewSysFinanceBoll())
+}
+
+// Model boll带ORM模型
+func (s *sSysFinanceBoll) Model(ctx context.Context, option ...*handler.Option) *gdb.Model {
+	return handler.Model(dao.FinanceBoll.Ctx(ctx), option...)
+}
+
+// Boll 用股票k线计算boll
+func (s *sSysFinanceBoll) Boll(ctx context.Context, data []*entity.FinanceKline, multiple int) (resp *result.BollResult, lastKline *entity.FinanceKline, err error) {
 	if len(data) == 0 {
 		return
 	}
 	if multiple == 0 {
 		multiple = 2
 	}
+
+	dataInfo := data[len(data)-1]
 
 	// 移动平均线
 	sma := SimpleMovingAverage(data)
@@ -95,6 +88,7 @@ func (s *sSysStockIndicator) CalculateBoll(ctx context.Context, data []*entity.F
 		StandardDeviation: resp.StandardDeviation,
 		ClosePrice:        resp.ClosePrice,
 		Degree:            resp.Degree,
+		Day:               dataInfo.Day,
 		Scale:             consts.ScaleDay,
 		Key:               lastKline.Key,
 	}
@@ -104,7 +98,7 @@ func (s *sSysStockIndicator) CalculateBoll(ctx context.Context, data []*entity.F
 }
 
 // bollReq 请求
-func (s *sSysStockIndicator) bollReq(ctx context.Context, code, ma string, scale, datalen int) (respData []*entity.FinanceKline, err error) {
+func (s *sSysFinanceBoll) bollReq(ctx context.Context, code, ma string, scale, datalen int) (respData []*entity.FinanceKline, err error) {
 
 	KlineList, err := sina.GetKlineData(ctx, &httpReq.SinaHttpReq{
 		Symbol:  code,

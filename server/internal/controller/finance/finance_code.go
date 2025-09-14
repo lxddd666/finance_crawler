@@ -76,3 +76,8 @@ func (c *cFinanceCode) CodeDailyKlineStart(ctx context.Context, req *financecode
 	err = service.SysFinanceCode().CodeDailyKlineStart(ctx)
 	return
 }
+
+func (c *cFinanceCode) DailyIndicator(ctx context.Context, req *financecode.DailyIndicatorReq) (res *financecode.DailyIndicatorRes, err error) {
+	err = service.SysFinanceCode().DailyIndicator(ctx)
+	return
+}

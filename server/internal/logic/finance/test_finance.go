@@ -16,16 +16,15 @@ import (
 	"github.com/gogf/gf/v2/os/gctx"
 	"github.com/gogf/gf/v2/text/gstr"
 	"github.com/gogf/gf/v2/util/gconv"
-	"hotgo/internal/consts"
 	"hotgo/internal/dao"
 	"hotgo/internal/library/hgorm/handler"
+	"hotgo/internal/model/do"
 	"hotgo/internal/model/entity"
 	sysin "hotgo/internal/model/input/financein"
 	"hotgo/internal/model/input/form"
 	"hotgo/internal/service"
 	"hotgo/utility/convert"
 	"hotgo/utility/excel"
-	"time"
 )
 
 type sSysTestFinance struct{}
@@ -216,41 +215,19 @@ func (s *sSysTestFinance) Status(ctx context.Context, in *sysin.TestFinanceStatu
 }
 
 // Start 更新测试分类状态
-func (s *sSysTestFinance) Start(ctx context.Context) error {
-	var codeList []*entity.FinanceCode
-	err := dao.FinanceCode.Ctx(ctx).Scan(&codeList)
-	if err != nil {
-		return err
-	}
+func (s *sSysTestFinance) Start(ctx context.Context) (err error) {
+	//"sh000001"
+	codeList, err := service.SysFinanceCode().GetAllCode(ctx)
 
 	for _, code := range codeList {
-		codeStr := fmt.Sprintf("%s%s", gstr.ToLower(code.Exchange), code.Code)
-		klineList, gErr := service.SysStockIndicator().Kline(ctx, codeStr, consts.MaNo, consts.ScaleDay, 20, false)
-		if gErr != nil {
+		if code.CompleteCode != "" {
 			continue
 		}
-		result, lastKline, gErr := service.SysStockIndicator().CalculateBoll(klineList, 2)
-		if gErr != nil {
-			continue
-		}
+		_, _ = dao.FinanceCode.Ctx(ctx).Fields(dao.FinanceCode.Columns().CompleteCode).Where(dao.FinanceCode.Columns().Code, code.Code).Data(do.FinanceCode{CompleteCode: fmt.Sprintf("%s%s", gstr.ToLower(code.Exchange), code.Code)}).Update()
 
-		// 插入数据库
-		boll := &entity.FinanceBoll{
-			Code:              code.Code,
-			Multiple:          2,
-			Timestamp:         result.Timestamp,
-			MiddleBand:        result.MiddleBand,
-			UpperBand:         result.UpperBand,
-			LowerBand:         result.LowerBand,
-			StandardDeviation: result.StandardDeviation,
-			ClosePrice:        result.ClosePrice,
-			Scale:             consts.ScaleDay,
-			Key:               lastKline.Key,
-		}
-		_, _ = dao.FinanceBoll.Ctx(ctx).InsertIgnore(boll)
-		time.Sleep(500 * time.Millisecond)
 	}
-	return nil
+
+	return
 }
 
 //

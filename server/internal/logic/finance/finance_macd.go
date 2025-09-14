@@ -1,3 +1,9 @@
+// Package sys
+// @Link  https://github.com/bufanyun/hotgo
+// @Copyright  Copyright (c) 2025 HotGo CLI
+// @Author  Ms <133814250@qq.com>
+// @License  https://github.com/bufanyun/hotgo/blob/master/LICENSE
+// @AutoGenerate Version 2.17.8
 package sys
 
 import (
@@ -5,12 +11,31 @@ import (
 	"fmt"
 	"hotgo/internal/consts"
 	"hotgo/internal/dao"
+	"hotgo/internal/library/hgorm/handler"
 	"hotgo/internal/model/entity"
+	"hotgo/internal/service"
 	"hotgo/utility/format"
+
+	"github.com/gogf/gf/v2/database/gdb"
 )
 
+type sSysFinanceMacd struct{}
+
+func NewSysFinanceMacd() *sSysFinanceMacd {
+	return &sSysFinanceMacd{}
+}
+
+func init() {
+	service.RegisterSysFinanceMacd(NewSysFinanceMacd())
+}
+
+// Model macd线ORM模型
+func (s *sSysFinanceMacd) Model(ctx context.Context, option ...*handler.Option) *gdb.Model {
+	return handler.Model(dao.FinanceMacd.Ctx(ctx), option...)
+}
+
 // Macd Macd计算
-func (s *sSysStockIndicator) Macd(ctx context.Context, data []*entity.FinanceKline, slowPeriod int, fastPeriod int, signalPeriod int) (results []*entity.FinanceMacd) {
+func (s *sSysFinanceMacd) Macd(ctx context.Context, data []*entity.FinanceKline, slowPeriod int, fastPeriod int, signalPeriod int) (results []*entity.FinanceMacd) {
 	if len(data) < fastPeriod {
 		return nil
 	}
@@ -68,6 +93,7 @@ func (s *sSysStockIndicator) Macd(ctx context.Context, data []*entity.FinanceKli
 			Scale:        consts.ScaleDay,
 		}
 	}
+
 	if len(results) > 0 {
 		_, _ = dao.FinanceMacd.Ctx(ctx).InsertIgnore(results)
 	}
@@ -93,4 +119,38 @@ func calculateEMA(data []*entity.FinanceKline, period int) []float64 {
 	}
 
 	return ema
+}
+
+// 计算EMA
+func calculateEMAV3(prices []float64, period int) []float64 {
+	ema := make([]float64, len(prices))
+	multiplier := 2.0 / float64(period+1)
+	ema[0] = prices[0] // 初始值为第一个价格
+	for i := 1; i < len(prices); i++ {
+		ema[i] = (prices[i]-ema[i-1])*multiplier + ema[i-1]
+	}
+	return ema
+}
+
+// 计算MACD
+func CalculateMACDV3(prices []float64) ([]float64, []float64, []float64) {
+	shortPeriod := 12
+	longPeriod := 26
+	signalPeriod := 9
+
+	shortEMA := calculateEMAV3(prices, shortPeriod)
+	longEMA := calculateEMAV3(prices, longPeriod)
+
+	macdLine := make([]float64, len(prices))
+	for i := range prices {
+		macdLine[i] = shortEMA[i] - longEMA[i]
+	}
+
+	signalLine := calculateEMAV3(macdLine, signalPeriod)
+
+	histogram := make([]float64, len(prices))
+	for i := range prices {
+		histogram[i] = macdLine[i] - signalLine[i]
+	}
+	return macdLine, signalLine, histogram
 }

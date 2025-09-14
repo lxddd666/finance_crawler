@@ -9,3 +9,7 @@ const (
 const (
 	KdjDefaultPeriod9 = 9
 )
+
+const (
+	BollDefaultMultiple2 = 2
+)

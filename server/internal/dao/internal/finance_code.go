@@ -13,35 +13,35 @@ import (
 
 // FinanceCodeDao is the data access object for the table hg_finance_code.
 type FinanceCodeDao struct {
-	table    string             // table is the underlying table name of the DAO.
-	group    string             // group is the database configuration group name of the current DAO.
-	columns  FinanceCodeColumns // columns contains all the column names of Table for convenient usage.
-	handlers []gdb.ModelHandler // handlers for customized model modification.
+	table   string             // table is the underlying table name of the DAO.
+	group   string             // group is the database configuration group name of the current DAO.
+	columns FinanceCodeColumns // columns contains all the column names of Table for convenient usage.
 }
 
 // FinanceCodeColumns defines and stores column names for the table hg_finance_code.
 type FinanceCodeColumns struct {
-	Id       string // 分类ID
-	Code     string // 代码
-	Name     string // 名称
-	Exchange string // 交易所
+	Id           string // 分类ID
+	Code         string // 代码
+	Name         string // 名称
+	Exchange     string // 交易所
+	CompleteCode string // 完整code
 }
 
 // financeCodeColumns holds the columns for the table hg_finance_code.
 var financeCodeColumns = FinanceCodeColumns{
-	Id:       "id",
-	Code:     "code",
-	Name:     "name",
-	Exchange: "exchange",
+	Id:           "id",
+	Code:         "code",
+	Name:         "name",
+	Exchange:     "exchange",
+	CompleteCode: "complete_code",
 }
 
 // NewFinanceCodeDao creates and returns a new DAO object for table data access.
-func NewFinanceCodeDao(handlers ...gdb.ModelHandler) *FinanceCodeDao {
+func NewFinanceCodeDao() *FinanceCodeDao {
 	return &FinanceCodeDao{
-		group:    "default",
-		table:    "hg_finance_code",
-		columns:  financeCodeColumns,
-		handlers: handlers,
+		group:   "default",
+		table:   "hg_finance_code",
+		columns: financeCodeColumns,
 	}
 }
 
@@ -67,11 +67,7 @@ func (dao *FinanceCodeDao) Group() string {
 
 // Ctx creates and returns a Model for the current DAO. It automatically sets the context for the current operation.
 func (dao *FinanceCodeDao) Ctx(ctx context.Context) *gdb.Model {
-	model := dao.DB().Model(dao.table)
-	for _, handler := range dao.handlers {
-		model = handler(model)
-	}
-	return model.Safe().Ctx(ctx)
+	return dao.DB().Model(dao.table).Safe().Ctx(ctx)
 }
 
 // Transaction wraps the transaction logic using function f.

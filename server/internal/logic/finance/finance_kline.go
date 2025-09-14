@@ -1,20 +1,45 @@
+// Package sys
+// @Link  https://github.com/bufanyun/hotgo
+// @Copyright  Copyright (c) 2025 HotGo CLI
+// @Author  Ms <133814250@qq.com>
+// @License  https://github.com/bufanyun/hotgo/blob/master/LICENSE
+// @AutoGenerate Version 2.17.8
 package sys
 
 import (
 	"context"
 	"fmt"
-	"github.com/gogf/gf/v2/errors/gerror"
-	"github.com/gogf/gf/v2/util/gconv"
 	"hotgo/internal/dao"
+	"hotgo/internal/library/hgorm/handler"
 	"hotgo/internal/logic/sina"
 	"hotgo/internal/model/entity"
 	"hotgo/internal/model/httpReq"
+	"hotgo/internal/service"
 	"hotgo/utility/format"
 	"log"
+
+	"github.com/gogf/gf/v2/database/gdb"
+	"github.com/gogf/gf/v2/errors/gerror"
+	"github.com/gogf/gf/v2/util/gconv"
 )
 
+type sSysFinanceKline struct{}
+
+func NewSysFinanceKline() *sSysFinanceKline {
+	return &sSysFinanceKline{}
+}
+
+func init() {
+	service.RegisterSysFinanceKline(NewSysFinanceKline())
+}
+
+// Model k线ORM模型
+func (s *sSysFinanceKline) Model(ctx context.Context, option ...*handler.Option) *gdb.Model {
+	return handler.Model(dao.FinanceKline.Ctx(ctx), option...)
+}
+
 // Kline k线
-func (s *sSysStockIndicator) Kline(ctx context.Context, code, ma string, scale, datalen int, proxyFlag bool) (klineList []*entity.FinanceKline, err error) {
+func (s *sSysFinanceKline) Kline(ctx context.Context, code, ma string, scale, datalen int, proxyFlag bool) (klineList []*entity.FinanceKline, err error) {
 	var KlineList []*sina.SinaResult
 	if !proxyFlag {
 		KlineList, err = sina.GetKlineData(ctx, &httpReq.SinaHttpReq{

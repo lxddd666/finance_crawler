@@ -13,9 +13,10 @@ import (
 
 // FinanceKlineDao is the data access object for the table hg_finance_kline.
 type FinanceKlineDao struct {
-	table   string              // table is the underlying table name of the DAO.
-	group   string              // group is the database configuration group name of the current DAO.
-	columns FinanceKlineColumns // columns contains all the column names of Table for convenient usage.
+	table    string              // table is the underlying table name of the DAO.
+	group    string              // group is the database configuration group name of the current DAO.
+	columns  FinanceKlineColumns // columns contains all the column names of Table for convenient usage.
+	handlers []gdb.ModelHandler  // handlers for customized model modification.
 }
 
 // FinanceKlineColumns defines and stores column names for the table hg_finance_kline.
@@ -55,11 +56,12 @@ var financeKlineColumns = FinanceKlineColumns{
 }
 
 // NewFinanceKlineDao creates and returns a new DAO object for table data access.
-func NewFinanceKlineDao() *FinanceKlineDao {
+func NewFinanceKlineDao(handlers ...gdb.ModelHandler) *FinanceKlineDao {
 	return &FinanceKlineDao{
-		group:   "default",
-		table:   "hg_finance_kline",
-		columns: financeKlineColumns,
+		group:    "default",
+		table:    "hg_finance_kline",
+		columns:  financeKlineColumns,
+		handlers: handlers,
 	}
 }
 
@@ -85,7 +87,11 @@ func (dao *FinanceKlineDao) Group() string {
 
 // Ctx creates and returns a Model for the current DAO. It automatically sets the context for the current operation.
 func (dao *FinanceKlineDao) Ctx(ctx context.Context) *gdb.Model {
-	return dao.DB().Model(dao.table).Safe().Ctx(ctx)
+	model := dao.DB().Model(dao.table)
+	for _, handler := range dao.handlers {
+		model = handler(model)
+	}
+	return model.Safe().Ctx(ctx)
 }
 
 // Transaction wraps the transaction logic using function f.

@@ -72,3 +72,10 @@ type CodeDailyKlineStartReq struct {
 }
 
 type CodeDailyKlineStartRes struct{}
+
+// DailyIndicatorReq 股票每日获取
+type DailyIndicatorReq struct {
+	g.Meta `path:"/financeCode/dailyIndicator" method:"post" tags:"股票代码" summary:"股票每日指标"`
+}
+
+type DailyIndicatorRes struct{}

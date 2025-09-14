@@ -8,15 +8,15 @@ import (
 	"hotgo/internal/dao/internal"
 )
 
-// financeCodeDailyDao is the data access object for the table hg_finance_code_daily.
+// financeScreeningDao is the data access object for the table hg_finance_screening.
 // You can define custom methods on it to extend its functionality as needed.
-type financeCodeDailyDao struct {
-	*internal.FinanceCodeDailyDao
+type financeScreeningDao struct {
+	*internal.FinanceScreeningDao
 }
 
 var (
-	// FinanceCodeDaily is a globally accessible object for table hg_finance_code_daily operations.
-	FinanceCodeDaily = financeCodeDailyDao{internal.NewFinanceCodeDailyDao()}
+	// FinanceScreening is a globally accessible object for table hg_finance_screening operations.
+	FinanceScreening = financeScreeningDao{internal.NewFinanceScreeningDao()}
 )
 
 // Add your custom methods and functionality below.

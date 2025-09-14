@@ -8,20 +8,15 @@ import (
 	"hotgo/internal/dao/internal"
 )
 
-// internalFinanceMacdDao is an internal type for wrapping the internal DAO implementation.
-type internalFinanceMacdDao = *internal.FinanceMacdDao
-
 // financeMacdDao is the data access object for the table hg_finance_macd.
 // You can define custom methods on it to extend its functionality as needed.
 type financeMacdDao struct {
-	internalFinanceMacdDao
+	*internal.FinanceMacdDao
 }
 
 var (
 	// FinanceMacd is a globally accessible object for table hg_finance_macd operations.
-	FinanceMacd = financeMacdDao{
-		internal.NewFinanceMacdDao(),
-	}
+	FinanceMacd = financeMacdDao{internal.NewFinanceMacdDao()}
 )
 
 // Add your custom methods and functionality below.

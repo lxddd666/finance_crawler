@@ -13,9 +13,10 @@ import (
 
 // FinanceCodeDailyDao is the data access object for the table hg_finance_code_daily.
 type FinanceCodeDailyDao struct {
-	table   string                  // table is the underlying table name of the DAO.
-	group   string                  // group is the database configuration group name of the current DAO.
-	columns FinanceCodeDailyColumns // columns contains all the column names of Table for convenient usage.
+	table    string                  // table is the underlying table name of the DAO.
+	group    string                  // group is the database configuration group name of the current DAO.
+	columns  FinanceCodeDailyColumns // columns contains all the column names of Table for convenient usage.
+	handlers []gdb.ModelHandler      // handlers for customized model modification.
 }
 
 // FinanceCodeDailyColumns defines and stores column names for the table hg_finance_code_daily.
@@ -41,11 +42,12 @@ var financeCodeDailyColumns = FinanceCodeDailyColumns{
 }
 
 // NewFinanceCodeDailyDao creates and returns a new DAO object for table data access.
-func NewFinanceCodeDailyDao() *FinanceCodeDailyDao {
+func NewFinanceCodeDailyDao(handlers ...gdb.ModelHandler) *FinanceCodeDailyDao {
 	return &FinanceCodeDailyDao{
-		group:   "default",
-		table:   "hg_finance_code_daily",
-		columns: financeCodeDailyColumns,
+		group:    "default",
+		table:    "hg_finance_code_daily",
+		columns:  financeCodeDailyColumns,
+		handlers: handlers,
 	}
 }
 
@@ -71,7 +73,11 @@ func (dao *FinanceCodeDailyDao) Group() string {
 
 // Ctx creates and returns a Model for the current DAO. It automatically sets the context for the current operation.
 func (dao *FinanceCodeDailyDao) Ctx(ctx context.Context) *gdb.Model {
-	return dao.DB().Model(dao.table).Safe().Ctx(ctx)
+	model := dao.DB().Model(dao.table)
+	for _, handler := range dao.handlers {
+		model = handler(model)
+	}
+	return model.Safe().Ctx(ctx)
 }
 
 // Transaction wraps the transaction logic using function f.

@@ -7,14 +7,38 @@ package service
 
 import (
 	"context"
-	"github.com/gogf/gf/v2/database/gdb"
 	"hotgo/internal/library/hgorm/handler"
 	"hotgo/internal/model/entity"
 	sysin "hotgo/internal/model/input/financein"
 	"hotgo/internal/model/result"
+
+	"github.com/gogf/gf/v2/database/gdb"
 )
 
 type (
+	ISysFinanceCode interface {
+		CodeDailyKlineStart(ctx context.Context) (err error)
+		// DailyIndicator 获取每日指标
+		DailyIndicator(ctx context.Context) (err error)
+		// Model 股票代码ORM模型
+		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
+		// List 获取股票代码列表
+		List(ctx context.Context, in *sysin.FinanceCodeListInp) (list []*sysin.FinanceCodeListModel, totalCount int, err error)
+		// Export 导出股票代码
+		Export(ctx context.Context, in *sysin.FinanceCodeListInp) (err error)
+		// Edit 修改/新增股票代码
+		Edit(ctx context.Context, in *sysin.FinanceCodeEditInp) (err error)
+		// Delete 删除股票代码
+		Delete(ctx context.Context, in *sysin.FinanceCodeDeleteInp) (err error)
+		// View 获取股票代码指定信息
+		View(ctx context.Context, in *sysin.FinanceCodeViewInp) (res *sysin.FinanceCodeViewModel, err error)
+		// ImportCode 导入股票代码
+		ImportCode(ctx context.Context, inp sysin.FinanceImportCodeInp) (err error)
+		// GetAllCode 获取所有code
+		GetAllCode(ctx context.Context) (codeList []*entity.FinanceCode, err error)
+		// GetCodeKline 获取股票k线
+		GetCodeKline(ctx context.Context, code string, KlineNum int) (list []*entity.FinanceKline, err error)
+	}
 	ISysFinanceAlltickResponse interface {
 		// Model alltick返回值ORM模型
 		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
@@ -31,39 +55,37 @@ type (
 		// View 获取alltick返回值指定信息
 		View(ctx context.Context, in *sysin.FinanceAlltickResponseViewInp) (res *sysin.FinanceAlltickResponseViewModel, err error)
 	}
-	ISysFinanceCode interface {
-		// Model 股票代码ORM模型
+	ISysFinanceBoll interface {
+		// Model boll带ORM模型
 		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
-		// List 获取股票代码列表
-		List(ctx context.Context, in *sysin.FinanceCodeListInp) (list []*sysin.FinanceCodeListModel, totalCount int, err error)
-		// Export 导出股票代码
-		Export(ctx context.Context, in *sysin.FinanceCodeListInp) (err error)
-		// Edit 修改/新增股票代码
-		Edit(ctx context.Context, in *sysin.FinanceCodeEditInp) (err error)
-		// Delete 删除股票代码
-		Delete(ctx context.Context, in *sysin.FinanceCodeDeleteInp) (err error)
-		// View 获取股票代码指定信息
-		View(ctx context.Context, in *sysin.FinanceCodeViewInp) (res *sysin.FinanceCodeViewModel, err error)
-		// ImportCode 导入股票代码
-		ImportCode(ctx context.Context, inp sysin.FinanceImportCodeInp) (err error)
-		// CodeDailyKlineStart 开始获取股票代码
-		CodeDailyKlineStart(ctx context.Context) error
-		// 获取每日指标
-		DailyIndicator(ctx context.Context) (err error)
-		// GetAllCode 获取所有code
-		GetAllCode(ctx context.Context) (list []*entity.FinanceCode, err error) {
+		// Boll 用股票k线计算boll
+		Boll(ctx context.Context, data []*entity.FinanceKline, multiple int) (resp *result.BollResult, lastKline *entity.FinanceKline, err error)
 	}
-	ISysStockIndicator interface {
-		// Kline K线
-		Kline(ctx context.Context, code string, ma string, scale int, datalen int, proxyFlag bool) (klineList []*entity.FinanceKline, err error)
-		// Boll boll带
-		Boll(ctx context.Context, code, ma string, scale, datalen, multiple int) (result *entity.FinanceBoll, err error)
-		// 用股票k线计算boll
-		CalculateBoll(ctx context.Context, data []*entity.FinanceKline, multiple int) (resp *result.BollResult, lastKline *entity.FinanceKline, err error)
-		// Macd Macd计算
-		Macd(ctx context.Context, data []*entity.FinanceKline, slowPeriod int, fastPeriod int, signalPeriod int) (results []*entity.FinanceMacd)
+	ISysFinanceKdj interface {
+		// Model kdjORM模型
+		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
 		// Kdj Kdj计算
 		Kdj(ctx context.Context, data []*entity.FinanceKline, period int) []*entity.FinanceKdj
+		// CheckKDJBuySignal 判断KDJ买入信号
+		CheckKDJBuySignal(kdjValues []*entity.FinanceKdj, currentIndex int) sysin.BuySignal
+	}
+	ISysFinanceKline interface {
+		// Model k线ORM模型
+		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
+		// Kline k线
+		Kline(ctx context.Context, code string, ma string, scale int, datalen int, proxyFlag bool) (klineList []*entity.FinanceKline, err error)
+	}
+	ISysFinanceMacd interface {
+		// Model macd线ORM模型
+		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
+		// Macd Macd计算
+		Macd(ctx context.Context, data []*entity.FinanceKline, slowPeriod int, fastPeriod int, signalPeriod int) (results []*entity.FinanceMacd)
+	}
+	ISysFinanceScreening interface {
+		// Model 筛股ORM模型
+		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
+		// ScreeningDaily 日常筛股
+		ScreeningDaily(ctx context.Context) (err error)
 	}
 	ISysTestFinance interface {
 		// ConvertToQueryString 将 FinanceAlltickRequest 结构体转换为 JSON 查询字符串
@@ -85,27 +107,20 @@ type (
 		// Status 更新测试分类状态
 		Status(ctx context.Context, in *sysin.TestFinanceStatusInp) (err error)
 		// Start 更新测试分类状态
-		Start(ctx context.Context) error
+		Start(ctx context.Context) (err error)
 	}
 )
 
 var (
-	localSysFinanceAlltickResponse ISysFinanceAlltickResponse
 	localSysFinanceCode            ISysFinanceCode
-	localSysStockIndicator         ISysStockIndicator
+	localSysFinanceAlltickResponse ISysFinanceAlltickResponse
+	localSysFinanceBoll            ISysFinanceBoll
+	localSysFinanceKdj             ISysFinanceKdj
+	localSysFinanceKline           ISysFinanceKline
+	localSysFinanceMacd            ISysFinanceMacd
+	localSysFinanceScreening       ISysFinanceScreening
 	localSysTestFinance            ISysTestFinance
 )
-
-func SysFinanceAlltickResponse() ISysFinanceAlltickResponse {
-	if localSysFinanceAlltickResponse == nil {
-		panic("implement not found for interface ISysFinanceAlltickResponse, forgot register?")
-	}
-	return localSysFinanceAlltickResponse
-}
-
-func RegisterSysFinanceAlltickResponse(i ISysFinanceAlltickResponse) {
-	localSysFinanceAlltickResponse = i
-}
 
 func SysFinanceCode() ISysFinanceCode {
 	if localSysFinanceCode == nil {
@@ -118,15 +133,70 @@ func RegisterSysFinanceCode(i ISysFinanceCode) {
 	localSysFinanceCode = i
 }
 
-func SysStockIndicator() ISysStockIndicator {
-	if localSysStockIndicator == nil {
-		panic("implement not found for interface ISysStockIndicator, forgot register?")
+func SysFinanceAlltickResponse() ISysFinanceAlltickResponse {
+	if localSysFinanceAlltickResponse == nil {
+		panic("implement not found for interface ISysFinanceAlltickResponse, forgot register?")
 	}
-	return localSysStockIndicator
+	return localSysFinanceAlltickResponse
 }
 
-func RegisterSysStockIndicator(i ISysStockIndicator) {
-	localSysStockIndicator = i
+func RegisterSysFinanceAlltickResponse(i ISysFinanceAlltickResponse) {
+	localSysFinanceAlltickResponse = i
+}
+
+func SysFinanceBoll() ISysFinanceBoll {
+	if localSysFinanceBoll == nil {
+		panic("implement not found for interface ISysFinanceBoll, forgot register?")
+	}
+	return localSysFinanceBoll
+}
+
+func RegisterSysFinanceBoll(i ISysFinanceBoll) {
+	localSysFinanceBoll = i
+}
+
+func SysFinanceKdj() ISysFinanceKdj {
+	if localSysFinanceKdj == nil {
+		panic("implement not found for interface ISysFinanceKdj, forgot register?")
+	}
+	return localSysFinanceKdj
+}
+
+func RegisterSysFinanceKdj(i ISysFinanceKdj) {
+	localSysFinanceKdj = i
+}
+
+func SysFinanceKline() ISysFinanceKline {
+	if localSysFinanceKline == nil {
+		panic("implement not found for interface ISysFinanceKline, forgot register?")
+	}
+	return localSysFinanceKline
+}
+
+func RegisterSysFinanceKline(i ISysFinanceKline) {
+	localSysFinanceKline = i
+}
+
+func SysFinanceMacd() ISysFinanceMacd {
+	if localSysFinanceMacd == nil {
+		panic("implement not found for interface ISysFinanceMacd, forgot register?")
+	}
+	return localSysFinanceMacd
+}
+
+func RegisterSysFinanceMacd(i ISysFinanceMacd) {
+	localSysFinanceMacd = i
+}
+
+func SysFinanceScreening() ISysFinanceScreening {
+	if localSysFinanceScreening == nil {
+		panic("implement not found for interface ISysFinanceScreening, forgot register?")
+	}
+	return localSysFinanceScreening
+}
+
+func RegisterSysFinanceScreening(i ISysFinanceScreening) {
+	localSysFinanceScreening = i
 }
 
 func SysTestFinance() ISysTestFinance {
