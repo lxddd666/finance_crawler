@@ -28,4 +28,5 @@ type FinanceBoll struct {
 	Key               interface{} // timestamp和code组合
 	Day               interface{} // 日期
 	Scale             interface{} // 分钟一条k线
+	Degree            interface{} // 层度
 }

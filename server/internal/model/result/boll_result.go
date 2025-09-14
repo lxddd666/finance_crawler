@@ -8,4 +8,5 @@ type BollResult struct {
 	LowerBand         float64 // 下轨（移动平均线 - 两倍标准差）
 	StandardDeviation float64 // 标准差
 	ClosePrice        float64 // 当前时间
+	Degree            float64 // 程度
 }

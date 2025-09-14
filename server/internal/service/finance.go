@@ -48,13 +48,20 @@ type (
 		ImportCode(ctx context.Context, inp sysin.FinanceImportCodeInp) (err error)
 		// CodeDailyKlineStart 开始获取股票代码
 		CodeDailyKlineStart(ctx context.Context) error
+		// 获取每日指标
+		DailyIndicator(ctx context.Context) (err error)
 	}
 	ISysStockIndicator interface {
 		// Kline K线
 		Kline(ctx context.Context, code string, ma string, scale int, datalen int, proxyFlag bool) (klineList []*entity.FinanceKline, err error)
 		// Boll boll带
 		Boll(ctx context.Context, code, ma string, scale, datalen, multiple int) (result *entity.FinanceBoll, err error)
-		CalculateBoll(data []*entity.FinanceKline, multiple int) (resp *result.BollResult, lastKline *entity.FinanceKline, err error)
+		// 用股票k线计算boll
+		CalculateBoll(ctx context.Context, data []*entity.FinanceKline, multiple int) (resp *result.BollResult, lastKline *entity.FinanceKline, err error)
+		// Macd Macd计算
+		Macd(ctx context.Context, data []*entity.FinanceKline, slowPeriod int, fastPeriod int, signalPeriod int) (results []*entity.FinanceMacd)
+		// Kdj Kdj计算
+		Kdj(ctx context.Context, data []*entity.FinanceKline, period int) []*entity.FinanceKdj
 	}
 	ISysTestFinance interface {
 		// ConvertToQueryString 将 FinanceAlltickRequest 结构体转换为 JSON 查询字符串

@@ -11,4 +11,5 @@ var (
 	FinanceConfig *entity.FinanceConfig
 	Day           string
 	Timestamp     int64
+	ProxyList     *SafeProxyList
 )

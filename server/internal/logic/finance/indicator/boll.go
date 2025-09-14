@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/util/gconv"
+	"hotgo/internal/consts"
 	"hotgo/internal/dao"
 	"hotgo/internal/logic/sina"
 	"hotgo/internal/model/httpReq"
@@ -21,7 +22,7 @@ func (s *sSysStockIndicator) Boll(ctx context.Context, code, ma string, scale, d
 	if err != nil {
 		return
 	}
-	result, lastKline, err := s.CalculateBoll(klineList, multiple)
+	result, lastKline, err := s.CalculateBoll(ctx, klineList, multiple)
 	if err != nil {
 		return
 	}
@@ -40,6 +41,7 @@ func (s *sSysStockIndicator) Boll(ctx context.Context, code, ma string, scale, d
 		LowerBand:         result.LowerBand,
 		StandardDeviation: result.StandardDeviation,
 		ClosePrice:        result.ClosePrice,
+		Degree:            result.Degree,
 		Scale:             scale,
 		Key:               lastKline.Key,
 	}
@@ -47,7 +49,8 @@ func (s *sSysStockIndicator) Boll(ctx context.Context, code, ma string, scale, d
 	return
 }
 
-func (s *sSysStockIndicator) CalculateBoll(data []*entity.FinanceKline, multiple int) (resp *result.BollResult, lastKline *entity.FinanceKline, err error) {
+// CalculateBoll 用股票k线计算boll
+func (s *sSysStockIndicator) CalculateBoll(ctx context.Context, data []*entity.FinanceKline, multiple int) (resp *result.BollResult, lastKline *entity.FinanceKline, err error) {
 	if len(data) == 0 {
 		return
 	}
@@ -80,7 +83,23 @@ func (s *sSysStockIndicator) CalculateBoll(data []*entity.FinanceKline, multiple
 		ClosePrice:        data[len(data)-1].ClosePrice,
 		Timestamp:         data[0].Timestamp,
 	}
+	resp.Degree = normalizeDegree(resp.UpperBand, resp.LowerBand, resp.ClosePrice)
 	lastKline = data[0]
+	boll := &entity.FinanceBoll{
+		Code:              lastKline.Code,
+		Multiple:          multiple,
+		Timestamp:         resp.Timestamp,
+		MiddleBand:        resp.MiddleBand,
+		UpperBand:         resp.UpperBand,
+		LowerBand:         resp.LowerBand,
+		StandardDeviation: resp.StandardDeviation,
+		ClosePrice:        resp.ClosePrice,
+		Degree:            resp.Degree,
+		Scale:             consts.ScaleDay,
+		Key:               lastKline.Key,
+	}
+	_, _ = dao.FinanceBoll.Ctx(ctx).InsertIgnore(boll)
+
 	return
 }
 
@@ -126,4 +145,11 @@ func SimpleMovingAverage(data []*entity.FinanceKline) float64 {
 		total += kline.ClosePrice
 	}
 	return total / float64(len(data))
+}
+
+func normalizeDegree(top, bottom, point float64) float64 {
+	if top <= bottom {
+		return 0
+	}
+	return (point - bottom) / (top - bottom)
 }

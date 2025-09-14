@@ -11,6 +11,7 @@ import (
 	"hotgo/internal/model/entity"
 	"hotgo/internal/service"
 	"hotgo/utility/simple"
+	"hotgo/utility/stock"
 	"sync"
 )
 
@@ -39,7 +40,7 @@ func (s *sSysFinanceCode) CodeDailyKlineStart(ctx context.Context) (err error) {
 				}()
 				// sz002095
 				stockCode := fmt.Sprintf("%s%s", gstr.ToLower(code.Exchange), code.Code)
-				_, gErr := service.SysStockIndicator().Kline(ctx, stockCode, consts.MaNo, consts.ScaleDay, 50, proxyFlag)
+				_, gErr := service.SysStockIndicator().Kline(ctx, stockCode, consts.MaNo, consts.ScaleDay, 2, proxyFlag)
 				if gErr != nil {
 					_, _ = dao.FinanceCodeDaily.Ctx(ctx).Where(dao.FinanceCodeDaily.Columns().Code, code.Code).Update(do.FinanceCodeDaily{Status: consts.TaskFail})
 				} else {
@@ -50,5 +51,28 @@ func (s *sSysFinanceCode) CodeDailyKlineStart(ctx context.Context) (err error) {
 		}
 		wg.Wait()
 	})
+	return
+}
+
+func (s *sSysFinanceCode) DailyIndicator(ctx context.Context) (err error) {
+	codeList, err := s.GetAllCode(ctx)
+	if err != nil {
+		return
+	}
+	for _, financeCode := range codeList {
+		code := stock.GetCode(financeCode.Code, financeCode.Exchange)
+		klineList, gErr := s.GetCodeKline(ctx, code, 50)
+		if gErr != nil {
+			err = gErr
+			return
+		}
+		// boll
+		_, _, _ = service.SysStockIndicator().CalculateBoll(ctx, klineList, 2)
+		// macd
+		_ = service.SysStockIndicator().Macd(ctx, klineList, consts.MacdDefaultSlowPeriod12, consts.MacdDefaultFastPeriod26, consts.MacdDefaultSignalPeriod9)
+		// kdj
+		_ = service.SysStockIndicator().Kdj(ctx, klineList, consts.KdjDefaultPeriod9)
+
+	}
 	return
 }

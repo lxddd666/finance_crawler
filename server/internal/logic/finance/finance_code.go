@@ -19,6 +19,7 @@ import (
 	"hotgo/internal/service"
 	"hotgo/utility/convert"
 	"hotgo/utility/excel"
+	"hotgo/utility/stock"
 	"io"
 	"mime/multipart"
 
@@ -253,4 +254,30 @@ func (b *buffer) Seek(offset int64, whence int) (int64, error) {
 
 func (b *buffer) Close() error {
 	return nil
+}
+
+func (s *sSysFinanceCode) GetAllCode(ctx context.Context) (list []*entity.FinanceCode, err error) {
+	// 获取每天boll
+	codeList := make([]*entity.FinanceCode, 0)
+	err = dao.FinanceKline.Ctx(ctx).Scan(&codeList)
+	if err != nil {
+		return
+	}
+	if len(codeList) == 0 {
+		err = gerror.New("获取code失败")
+		return
+	}
+	return
+}
+
+func (s *sSysFinanceCode) GetCodeKline(ctx context.Context, code string, KlineNum int) (list []*entity.FinanceKline, err error) {
+	if KlineNum == 0 {
+		KlineNum = 50
+	}
+	err = dao.FinanceKline.Ctx(ctx).Where(dao.FinanceKline.Columns().Code, code).OrderDesc(dao.FinanceKline.Columns().Day).Limit(KlineNum).Scan(&list)
+	if err != nil {
+		return
+	}
+	stock.ReverseKline(list)
+	return
 }
