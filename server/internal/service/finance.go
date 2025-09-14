@@ -50,6 +50,8 @@ type (
 		CodeDailyKlineStart(ctx context.Context) error
 		// 获取每日指标
 		DailyIndicator(ctx context.Context) (err error)
+		// GetAllCode 获取所有code
+		GetAllCode(ctx context.Context) (list []*entity.FinanceCode, err error) {
 	}
 	ISysStockIndicator interface {
 		// Kline K线

@@ -7,6 +7,8 @@
 package sys
 
 import (
+	"context"
+	"fmt"
 	"hotgo/internal/service"
 )
 
@@ -23,3 +25,14 @@ func init() {
 // =================================================================================
 // Code generated and maintained by GoFrame CLI tool. DO NOT EDIT.
 // =================================================================================
+
+func (s *sSysStockIndicator) Screening(ctx context.Context) {
+	codeList, err := service.SysFinanceCode().GetAllCode(ctx)
+	if err != nil {
+		return
+	}
+	for _, code := range codeList {
+		// 获取 满足boll
+		fmt.Println(code)
+	}
+}

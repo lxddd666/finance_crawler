@@ -54,6 +54,7 @@ func (s *sSysFinanceCode) CodeDailyKlineStart(ctx context.Context) (err error) {
 	return
 }
 
+// DailyIndicator 获取每日指标
 func (s *sSysFinanceCode) DailyIndicator(ctx context.Context) (err error) {
 	codeList, err := s.GetAllCode(ctx)
 	if err != nil {
@@ -72,7 +73,6 @@ func (s *sSysFinanceCode) DailyIndicator(ctx context.Context) (err error) {
 		_ = service.SysStockIndicator().Macd(ctx, klineList, consts.MacdDefaultSlowPeriod12, consts.MacdDefaultFastPeriod26, consts.MacdDefaultSignalPeriod9)
 		// kdj
 		_ = service.SysStockIndicator().Kdj(ctx, klineList, consts.KdjDefaultPeriod9)
-
 	}
 	return
 }

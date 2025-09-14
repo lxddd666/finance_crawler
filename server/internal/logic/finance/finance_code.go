@@ -256,6 +256,7 @@ func (b *buffer) Close() error {
 	return nil
 }
 
+// GetAllCode 获取所有code
 func (s *sSysFinanceCode) GetAllCode(ctx context.Context) (list []*entity.FinanceCode, err error) {
 	// 获取每天boll
 	codeList := make([]*entity.FinanceCode, 0)
@@ -270,6 +271,7 @@ func (s *sSysFinanceCode) GetAllCode(ctx context.Context) (list []*entity.Financ
 	return
 }
 
+// GetCodeKline 获取股票k线
 func (s *sSysFinanceCode) GetCodeKline(ctx context.Context, code string, KlineNum int) (list []*entity.FinanceKline, err error) {
 	if KlineNum == 0 {
 		KlineNum = 50
