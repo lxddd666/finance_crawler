@@ -61,6 +61,10 @@ type (
 		// Boll 用股票k线计算boll
 		Boll(ctx context.Context, data []*entity.FinanceKline, multiple int) (resp *result.BollResult, lastKline *entity.FinanceKline, err error)
 	}
+	ISysFinanceDailyKline interface {
+		// Model 股票日K线数据表ORM模型
+		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
+	}
 	ISysFinanceKdj interface {
 		// Model kdjORM模型
 		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
@@ -73,7 +77,9 @@ type (
 		// Model k线ORM模型
 		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
 		// Kline k线
-		Kline(ctx context.Context, code string, ma string, scale int, datalen int, proxyFlag bool) (klineList []*entity.FinanceKline, err error)
+		Kline(ctx context.Context, code, ma string, scale, datalen int, proxyFlag bool) (klineList []*entity.FinanceKline, err error)
+		// GetCodeAllKline 获取股票数据库所有k线
+		GetCodeAllKline(ctx context.Context, code string) (klineList []*entity.FinanceKline, err error)
 	}
 	ISysFinanceMacd interface {
 		// Model macd线ORM模型
@@ -115,6 +121,7 @@ var (
 	localSysFinanceCode            ISysFinanceCode
 	localSysFinanceAlltickResponse ISysFinanceAlltickResponse
 	localSysFinanceBoll            ISysFinanceBoll
+	localSysFinanceDailyKline      ISysFinanceDailyKline
 	localSysFinanceKdj             ISysFinanceKdj
 	localSysFinanceKline           ISysFinanceKline
 	localSysFinanceMacd            ISysFinanceMacd
@@ -153,6 +160,17 @@ func SysFinanceBoll() ISysFinanceBoll {
 
 func RegisterSysFinanceBoll(i ISysFinanceBoll) {
 	localSysFinanceBoll = i
+}
+
+func SysFinanceDailyKline() ISysFinanceDailyKline {
+	if localSysFinanceDailyKline == nil {
+		panic("implement not found for interface ISysFinanceDailyKline, forgot register?")
+	}
+	return localSysFinanceDailyKline
+}
+
+func RegisterSysFinanceDailyKline(i ISysFinanceDailyKline) {
+	localSysFinanceDailyKline = i
 }
 
 func SysFinanceKdj() ISysFinanceKdj {

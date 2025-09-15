@@ -107,3 +107,11 @@ func BatchInsertKline(ctx context.Context, klineList []*entity.FinanceKline, cod
 
 	return nil
 }
+
+func (s *sSysFinanceKline) GetCodeAllKline(ctx context.Context, code string) (klineList []*entity.FinanceKline, err error) {
+	err = dao.FinanceKline.Ctx(ctx).Where(dao.FinanceKline.Columns().Code, code).OrderDesc(dao.FinanceKline.Columns().Day).Scan(&klineList)
+	if err != nil {
+		return
+	}
+	return
+}
