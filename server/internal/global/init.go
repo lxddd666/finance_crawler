@@ -8,17 +8,6 @@ package global
 import (
 	"context"
 	"fmt"
-	"github.com/gogf/gf/contrib/trace/jaeger/v2"
-	"github.com/gogf/gf/v2"
-	"github.com/gogf/gf/v2/container/gvar"
-	"github.com/gogf/gf/v2/encoding/gjson"
-	"github.com/gogf/gf/v2/frame/g"
-	"github.com/gogf/gf/v2/os/gctx"
-	"github.com/gogf/gf/v2/os/gfile"
-	"github.com/gogf/gf/v2/os/glog"
-	"github.com/gogf/gf/v2/os/gtime"
-	"github.com/gogf/gf/v2/text/gstr"
-	"github.com/gogf/gf/v2/util/gmode"
 	"hotgo/internal/consts"
 	"hotgo/internal/dao"
 	"hotgo/internal/library/cache"
@@ -31,7 +20,28 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/gogf/gf/contrib/trace/jaeger/v2"
+	"github.com/gogf/gf/v2"
+	"github.com/gogf/gf/v2/container/gvar"
+	"github.com/gogf/gf/v2/encoding/gjson"
+	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/os/gctx"
+	"github.com/gogf/gf/v2/os/gfile"
+	"github.com/gogf/gf/v2/os/glog"
+	"github.com/gogf/gf/v2/os/gtime"
+	"github.com/gogf/gf/v2/text/gstr"
+	"github.com/gogf/gf/v2/util/gmode"
 )
+
+// ProxyInfo 代理信息结构体
+type ProxyInfo struct {
+	IpAddress string `json:"ip_address"`
+	Port      int    `json:"port"`
+}
+
+// ParsedProxyList 解析后的代理列表
+var ParsedProxyList []string
 
 func Init(ctx context.Context) {
 	// 设置gf运行模式
@@ -69,6 +79,9 @@ func Init(ctx context.Context) {
 	// 获取当前时间未执行code
 	_ = GetDayData(ctx)
 
+	// 解析代理文件
+	parseJsonFile(ctx)
+
 	// 初始化代理池
 	InitProxyPool()
 }
@@ -78,7 +91,50 @@ func InitProxyPool() {
 	ProxyList = NewSafeProxyList(proxyList())
 }
 
+func parseJsonFile(ctx context.Context) {
+	// 代理文件路径
+	proxyFilePath := "internal/global/proxy_file/proxies.json"
+
+	// 检查文件是否存在
+	if !gfile.Exists(proxyFilePath) {
+		g.Log().Warningf(ctx, "代理文件不存在: %s", proxyFilePath)
+		return
+	}
+
+	// 读取JSON文件内容
+	jsonContent := gfile.GetContents(proxyFilePath)
+	if jsonContent == "" {
+		g.Log().Warning(ctx, "代理文件内容为空")
+		return
+	}
+
+	// 解析JSON数据
+	var proxyInfos []ProxyInfo
+	if err := gjson.DecodeTo(jsonContent, &proxyInfos); err != nil {
+		g.Log().Errorf(ctx, "解析代理JSON文件失败: %v", err)
+		return
+	}
+
+	// 转换为ip:port格式的字符串数组
+	ParsedProxyList = make([]string, 0, len(proxyInfos))
+	for _, proxy := range proxyInfos {
+		proxyStr := fmt.Sprintf("%s:%d", proxy.IpAddress, proxy.Port)
+		ParsedProxyList = append(ParsedProxyList, proxyStr)
+	}
+
+	g.Log().Infof(ctx, "成功解析代理文件，共加载 %d 个代理", len(ParsedProxyList))
+}
+
 func proxyList() []string {
+	// 优先使用从JSON文件解析的代理列表
+	if len(ParsedProxyList) > 0 {
+		g.Log().Infof(gctx.New(), "使用JSON文件中的代理列表，共 %d 个代理", len(ParsedProxyList))
+		return ParsedProxyList
+	}
+
+	// 如果没有解析到代理，使用硬编码的备用代理列表
+	g.Log().Warning(gctx.New(), "未找到有效的代理文件，使用硬编码的备用代理列表")
+	// https://fineproxy.org/cn/free-proxy/
 	return []string{
 		"68.71.251.134:4145",
 		"198.177.253.13:4145",

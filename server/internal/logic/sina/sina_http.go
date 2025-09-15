@@ -72,7 +72,7 @@ func GetKlineData(ctx context.Context, sinaReq *httpReq.SinaHttpReq) (response [
 
 func GetKlineDataProxy(ctx context.Context, sinaReq *httpReq.SinaHttpReq) (response []*SinaResult, err error) {
 	url := "http://money.finance.sina.com.cn/quotes_service/api/json_v2.php/CN_MarketData.getKLineData"
-
+	// https://fineproxy.org/cn/free-proxy/
 	log.Println("请求内容 proxy：", url)
 	queryStr, err := BuildSinaURL(sinaReq)
 	url = fmt.Sprintf("%s?%s", url, queryStr)
