@@ -37,6 +37,7 @@ type FinanceBollColumns struct {
 	Key               string // timestamp和code组合
 	Day               string // 日期
 	Scale             string // 分钟一条k线
+	Degree            string // 层度
 }
 
 // financeBollColumns holds the columns for the table hg_finance_boll.
@@ -57,6 +58,7 @@ var financeBollColumns = FinanceBollColumns{
 	Key:               "key",
 	Day:               "day",
 	Scale:             "scale",
+	Degree:            "degree",
 }
 
 // NewFinanceBollDao creates and returns a new DAO object for table data access.

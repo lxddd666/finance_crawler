@@ -7,6 +7,7 @@ import (
 	"github.com/gogf/gf/v2/text/gstr"
 	"hotgo/internal/consts"
 	"hotgo/internal/dao"
+	"hotgo/internal/global"
 	"hotgo/internal/model/do"
 	"hotgo/internal/service"
 	"hotgo/utility/stock"
@@ -20,6 +21,17 @@ import (
 
 func (s *sSysFinanceCode) CodeDailyKlineStart(ctx context.Context) (err error) {
 	simple.SafeGo(gctx.New(), func(ctx context.Context) {
+
+		defer func() {
+			// 递归
+			count, _ := dao.FinanceCodeDaily.Ctx(ctx).WhereNot(dao.FinanceCodeDaily.Columns().Status, consts.TaskComplete).Count()
+			if count > 0 {
+				if global.ProxyList.Size() > 0 {
+					_ = s.CodeDailyKlineStart(ctx)
+				}
+			}
+
+		}()
 		// 获取当前未完成任务
 		codeDaily := make([]*entity.FinanceCodeDaily, 0)
 		err = dao.FinanceCodeDaily.Ctx(ctx).WhereNot(dao.FinanceCodeDaily.Columns().Status, consts.TaskComplete).Scan(&codeDaily)
@@ -28,7 +40,7 @@ func (s *sSysFinanceCode) CodeDailyKlineStart(ctx context.Context) (err error) {
 		}
 		proxyFlag := true
 		// 创建大小为5的并发限制通道
-		concurrencyLimit := 15
+		concurrencyLimit := 35
 		semaphore := make(chan struct{}, concurrencyLimit)
 		wg := sync.WaitGroup{}
 		for _, code := range codeDaily {
@@ -64,7 +76,7 @@ func (s *sSysFinanceCode) DailyIndicator(ctx context.Context) (err error) {
 		return
 	}
 	wg := &sync.WaitGroup{}
-	concurrencyLimit := 50
+	concurrencyLimit := 20
 	semaphore := make(chan struct{}, concurrencyLimit)
 
 	for _, financeCode := range codeList {
@@ -88,6 +100,9 @@ func (s *sSysFinanceCode) DailyIndicator(ctx context.Context) (err error) {
 			_ = service.SysFinanceMacd().Macd(ctx, klineList, consts.MacdDefaultSlowPeriod12, consts.MacdDefaultFastPeriod26, consts.MacdDefaultSignalPeriod9)
 			//// kdj
 			_ = service.SysFinanceKdj().Kdj(ctx, klineList, consts.KdjDefaultPeriod9)
+			// 均线
+			stock.ReverseKline(klineList)
+			_ = service.SysFinanceDailyKline().MovingAverage(ctx, klineList)
 		})
 	}
 	wg.Wait()

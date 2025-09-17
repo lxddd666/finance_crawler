@@ -14,17 +14,16 @@ import (
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/gctx"
-	"github.com/gogf/gf/v2/text/gstr"
 	"github.com/gogf/gf/v2/util/gconv"
 	"hotgo/internal/dao"
 	"hotgo/internal/library/hgorm/handler"
-	"hotgo/internal/model/do"
 	"hotgo/internal/model/entity"
 	sysin "hotgo/internal/model/input/financein"
 	"hotgo/internal/model/input/form"
 	"hotgo/internal/service"
 	"hotgo/utility/convert"
 	"hotgo/utility/excel"
+	"hotgo/utility/stock"
 )
 
 type sSysTestFinance struct{}
@@ -216,17 +215,22 @@ func (s *sSysTestFinance) Status(ctx context.Context, in *sysin.TestFinanceStatu
 
 // Start 更新测试分类状态
 func (s *sSysTestFinance) Start(ctx context.Context) (err error) {
-	//"sh000001"
 	codeList, err := service.SysFinanceCode().GetAllCode(ctx)
-
-	for _, code := range codeList {
-		if code.CompleteCode != "" {
-			continue
-		}
-		_, _ = dao.FinanceCode.Ctx(ctx).Fields(dao.FinanceCode.Columns().CompleteCode).Where(dao.FinanceCode.Columns().Code, code.Code).Data(do.FinanceCode{CompleteCode: fmt.Sprintf("%s%s", gstr.ToLower(code.Exchange), code.Code)}).Update()
-
+	if err != nil {
+		return
 	}
 
+	for _, financeCode := range codeList {
+		code := stock.GetCode(financeCode.Code, financeCode.Exchange)
+		klineList, gErr := service.SysFinanceCode().GetCodeKline(ctx, code, 50)
+		stock.ReverseKline(klineList)
+
+		if gErr != nil {
+			err = gErr
+			return
+		}
+		_ = service.SysFinanceDailyKline().MovingAverage(ctx, klineList)
+	}
 	return
 }
 

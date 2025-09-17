@@ -11,64 +11,64 @@ import (
 	"github.com/gogf/gf/v2/frame/g"
 )
 
-// FinanceCodeDao is the data access object for the table hg_finance_code.
-type FinanceCodeDao struct {
+// FinancePlotDao is the data access object for the table hg_finance_plot.
+type FinancePlotDao struct {
 	table    string             // table is the underlying table name of the DAO.
 	group    string             // group is the database configuration group name of the current DAO.
-	columns  FinanceCodeColumns // columns contains all the column names of Table for convenient usage.
+	columns  FinancePlotColumns // columns contains all the column names of Table for convenient usage.
 	handlers []gdb.ModelHandler // handlers for customized model modification.
 }
 
-// FinanceCodeColumns defines and stores column names for the table hg_finance_code.
-type FinanceCodeColumns struct {
-	Id           string // 分类ID
-	Code         string // 代码
-	Name         string // 名称
-	Exchange     string // 交易所
-	CompleteCode string // 完整code
+// FinancePlotColumns defines and stores column names for the table hg_finance_plot.
+type FinancePlotColumns struct {
+	Id        string // 分类ID
+	Code      string // code
+	Indicator string // 指标
+	Day       string // 日期
+	Path      string // path
 }
 
-// financeCodeColumns holds the columns for the table hg_finance_code.
-var financeCodeColumns = FinanceCodeColumns{
-	Id:           "id",
-	Code:         "code",
-	Name:         "name",
-	Exchange:     "exchange",
-	CompleteCode: "complete_code",
+// financePlotColumns holds the columns for the table hg_finance_plot.
+var financePlotColumns = FinancePlotColumns{
+	Id:        "id",
+	Code:      "code",
+	Indicator: "indicator",
+	Day:       "day",
+	Path:      "path",
 }
 
-// NewFinanceCodeDao creates and returns a new DAO object for table data access.
-func NewFinanceCodeDao(handlers ...gdb.ModelHandler) *FinanceCodeDao {
-	return &FinanceCodeDao{
+// NewFinancePlotDao creates and returns a new DAO object for table data access.
+func NewFinancePlotDao(handlers ...gdb.ModelHandler) *FinancePlotDao {
+	return &FinancePlotDao{
 		group:    "default",
-		table:    "hg_finance_code",
-		columns:  financeCodeColumns,
+		table:    "hg_finance_plot",
+		columns:  financePlotColumns,
 		handlers: handlers,
 	}
 }
 
 // DB retrieves and returns the underlying raw database management object of the current DAO.
-func (dao *FinanceCodeDao) DB() gdb.DB {
+func (dao *FinancePlotDao) DB() gdb.DB {
 	return g.DB(dao.group)
 }
 
 // Table returns the table name of the current DAO.
-func (dao *FinanceCodeDao) Table() string {
+func (dao *FinancePlotDao) Table() string {
 	return dao.table
 }
 
 // Columns returns all column names of the current DAO.
-func (dao *FinanceCodeDao) Columns() FinanceCodeColumns {
+func (dao *FinancePlotDao) Columns() FinancePlotColumns {
 	return dao.columns
 }
 
 // Group returns the database configuration group name of the current DAO.
-func (dao *FinanceCodeDao) Group() string {
+func (dao *FinancePlotDao) Group() string {
 	return dao.group
 }
 
 // Ctx creates and returns a Model for the current DAO. It automatically sets the context for the current operation.
-func (dao *FinanceCodeDao) Ctx(ctx context.Context) *gdb.Model {
+func (dao *FinancePlotDao) Ctx(ctx context.Context) *gdb.Model {
 	model := dao.DB().Model(dao.table)
 	for _, handler := range dao.handlers {
 		model = handler(model)
@@ -82,6 +82,6 @@ func (dao *FinanceCodeDao) Ctx(ctx context.Context) *gdb.Model {
 //
 // Note: Do not commit or roll back the transaction in function f,
 // as it is automatically handled by this function.
-func (dao *FinanceCodeDao) Transaction(ctx context.Context, f func(ctx context.Context, tx gdb.TX) error) (err error) {
+func (dao *FinancePlotDao) Transaction(ctx context.Context, f func(ctx context.Context, tx gdb.TX) error) (err error) {
 	return dao.Ctx(ctx).Transaction(ctx, f)
 }

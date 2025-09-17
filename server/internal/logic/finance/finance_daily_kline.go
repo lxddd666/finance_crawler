@@ -8,8 +8,6 @@ package sys
 
 import (
 	"context"
-	"fmt"
-	"github.com/gogf/gf/v2/text/gstr"
 	"hotgo/internal/model/entity"
 
 	"hotgo/internal/dao"
@@ -36,29 +34,54 @@ func (s *sSysFinanceDailyKline) Model(ctx context.Context, option ...*handler.Op
 	return handler.Model(dao.FinanceDailyKline.Ctx(ctx), option...)
 }
 
-func (s *sSysFinanceDailyKline) MovingAverage(ctx context.Context) (err error) {
+// MovingAverage 均线计算
+func (s *sSysFinanceDailyKline) MovingAverage(ctx context.Context, klineList []*entity.FinanceKline) (err error) {
+	lastKline := klineList[len(klineList)-1]
+
 	// 获取所有均线数据
-	codeList, err := service.SysFinanceCode().GetAllCode(ctx)
-	if err != nil {
-		return
-	}
-	for _, co := range codeList {
-		fmt.Println(co)
-		stockCode := fmt.Sprintf("%s%s", gstr.ToLower(co.Exchange), co.Code)
-		// 获取股票
-		list, err := service.SysFinanceKline().GetCodeAllKline(ctx, stockCode)
-		if err != nil {
-			return
-		}
-		fmt.Println(list)
-	}
+	stockCode := lastKline.Code
+	// 获取股票
+	// md_5
+	average5 := calculateMovingAverage(klineList, 5)
+	// md_10
+	average10 := calculateMovingAverage(klineList, 10)
+	// md_20
+	average20 := calculateMovingAverage(klineList, 20)
+	// md_30
+	average30 := calculateMovingAverage(klineList, 30)
+	// md_60
+	average60 := calculateMovingAverage(klineList, 60)
+
+	_, err = s.Model(ctx).InsertIgnore(entity.FinanceDailyKline{
+		Code:       stockCode,
+		Timestamp:  lastKline.Timestamp,
+		OpenPrice:  lastKline.OpenPrice,
+		ClosePrice: lastKline.ClosePrice,
+		HighPrice:  lastKline.HighPrice,
+		LowPrice:   lastKline.LowPrice,
+		Volume:     lastKline.Volume,
+		Turnover:   lastKline.Turnover,
+		Md5:        average5,
+		Md10:       average10,
+		Md20:       average20,
+		Md30:       average30,
+		Md60:       average60,
+		Scale:      lastKline.Scale,
+		Key:        lastKline.Key,
+		Day:        lastKline.Day,
+	})
+
 	return
 }
 
 // 5日 10日 20日 30日
-func calculateMovingAverage(klineList []*entity.FinanceKline, days int) (average float64, err error) {
+func calculateMovingAverage(klineList []*entity.FinanceKline, days int) (average float64) {
+	sum := 0.0
 	if len(klineList) > days {
-
+		for i := 0; i < days; i++ {
+			sum += klineList[i].ClosePrice
+		}
 	}
+	average = sum / float64(days)
 	return
 }

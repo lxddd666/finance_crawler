@@ -64,6 +64,8 @@ type (
 	ISysFinanceDailyKline interface {
 		// Model 股票日K线数据表ORM模型
 		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
+		// MovingAverage 均线计算
+		MovingAverage(ctx context.Context, klineList []*entity.FinanceKline) (err error)
 	}
 	ISysFinanceKdj interface {
 		// Model kdjORM模型
@@ -77,8 +79,7 @@ type (
 		// Model k线ORM模型
 		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
 		// Kline k线
-		Kline(ctx context.Context, code, ma string, scale, datalen int, proxyFlag bool) (klineList []*entity.FinanceKline, err error)
-		// GetCodeAllKline 获取股票数据库所有k线
+		Kline(ctx context.Context, code string, ma string, scale int, datalen int, proxyFlag bool) (klineList []*entity.FinanceKline, err error)
 		GetCodeAllKline(ctx context.Context, code string) (klineList []*entity.FinanceKline, err error)
 	}
 	ISysFinanceMacd interface {
@@ -86,6 +87,14 @@ type (
 		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
 		// Macd Macd计算
 		Macd(ctx context.Context, data []*entity.FinanceKline, slowPeriod int, fastPeriod int, signalPeriod int) (results []*entity.FinanceMacd)
+	}
+	ISysFinancePlot interface {
+		// Model plot图ORM模型
+		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
+		// List 获取plot图列表
+		List(ctx context.Context, in *sysin.FinancePlotListInp) (list []*sysin.FinancePlotListModel, totalCount int, err error)
+		// CreatePlot 指标图创建
+		CreatePlot(ctx context.Context, create sysin.FinancePlotCreate) (err error)
 	}
 	ISysFinanceScreening interface {
 		// Model 筛股ORM模型
@@ -125,6 +134,7 @@ var (
 	localSysFinanceKdj             ISysFinanceKdj
 	localSysFinanceKline           ISysFinanceKline
 	localSysFinanceMacd            ISysFinanceMacd
+	localSysFinancePlot            ISysFinancePlot
 	localSysFinanceScreening       ISysFinanceScreening
 	localSysTestFinance            ISysTestFinance
 )
@@ -204,6 +214,17 @@ func SysFinanceMacd() ISysFinanceMacd {
 
 func RegisterSysFinanceMacd(i ISysFinanceMacd) {
 	localSysFinanceMacd = i
+}
+
+func SysFinancePlot() ISysFinancePlot {
+	if localSysFinancePlot == nil {
+		panic("implement not found for interface ISysFinancePlot, forgot register?")
+	}
+	return localSysFinancePlot
+}
+
+func RegisterSysFinancePlot(i ISysFinancePlot) {
+	localSysFinancePlot = i
 }
 
 func SysFinanceScreening() ISysFinanceScreening {

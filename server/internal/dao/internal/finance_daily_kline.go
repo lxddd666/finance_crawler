@@ -37,7 +37,7 @@ type FinanceDailyKlineColumns struct {
 	Md30       string // 30日均线
 	Md60       string // 60日均线
 	CreatedAt  string // 创建时间
-	UniqueKey  string // 唯一键: timestamp_code_scale
+	Key        string // 唯一键: timestamp_code_scale
 	Scale      string // K线周期(分钟)
 	Day        string // 日期(yyyy-MM-dd)
 }
@@ -60,7 +60,7 @@ var financeDailyKlineColumns = FinanceDailyKlineColumns{
 	Md30:       "md_30",
 	Md60:       "md_60",
 	CreatedAt:  "created_at",
-	UniqueKey:  "unique_key",
+	Key:        "key",
 	Scale:      "scale",
 	Day:        "day",
 }

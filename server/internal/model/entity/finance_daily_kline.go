@@ -26,7 +26,7 @@ type FinanceDailyKline struct {
 	Md30       float64     `json:"md30"       orm:"md_30"       description:"30日均线"`
 	Md60       float64     `json:"md60"       orm:"md_60"       description:"60日均线"`
 	CreatedAt  *gtime.Time `json:"createdAt"  orm:"created_at"  description:"创建时间"`
-	UniqueKey  string      `json:"uniqueKey"  orm:"unique_key"  description:"唯一键: timestamp_code_scale"`
+	Key        string      `json:"key"        orm:"key"         description:"唯一键: timestamp_code_scale"`
 	Scale      int         `json:"scale"      orm:"scale"       description:"K线周期(分钟)"`
 	Day        string      `json:"day"        orm:"day"         description:"日期(yyyy-MM-dd)"`
 }

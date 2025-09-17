@@ -64,7 +64,7 @@ type FinanceDailyKlineEditInp struct {
 
 func (in *FinanceDailyKlineEditInp) Filter(ctx context.Context) (err error) {
 	// 验证唯一键: timestamp_code_scale
-	if err := g.Validator().Rules("required").Data(in.UniqueKey).Messages("唯一键: timestamp_code_scale不能为空").Run(ctx); err != nil {
+	if err := g.Validator().Rules("required").Data(in.Key).Messages("唯一键: timestamp_code_scale不能为空").Run(ctx); err != nil {
 		return err.Current()
 	}
 

@@ -127,15 +127,11 @@ func parseJsonFile(ctx context.Context) {
 
 func proxyList() []string {
 	// 优先使用从JSON文件解析的代理列表
-	if len(ParsedProxyList) > 0 {
-		g.Log().Infof(gctx.New(), "使用JSON文件中的代理列表，共 %d 个代理", len(ParsedProxyList))
-		return ParsedProxyList
-	}
 
 	// 如果没有解析到代理，使用硬编码的备用代理列表
 	g.Log().Warning(gctx.New(), "未找到有效的代理文件，使用硬编码的备用代理列表")
 	// https://fineproxy.org/cn/free-proxy/
-	return []string{
+	proxtys := []string{
 		"68.71.251.134:4145",
 		"198.177.253.13:4145",
 		"199.187.210.54:4145",
@@ -263,6 +259,16 @@ func proxyList() []string {
 		"198.8.94.174:39078",
 		"192.252.215.5:16137",
 	}
+	if len(ParsedProxyList) > 0 {
+		g.Log().Infof(gctx.New(), "使用JSON文件中的代理列表，共 %d 个代理", len(ParsedProxyList))
+		ParsedProxyList = append(ParsedProxyList, "127.0.0.1:7890",
+			"127.0.0.1:7890",
+			"127.0.0.1:7890",
+			"127.0.0.1:7890",
+			"127.0.0.1:7890")
+		proxtys = append(proxtys, ParsedProxyList...)
+	}
+	return proxtys
 }
 
 // LoggingServeLogHandler 服务日志处理

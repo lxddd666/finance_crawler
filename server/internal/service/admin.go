@@ -109,7 +109,7 @@ type (
 		// GetLowerIds 获取指定用户的所有下级ID集合
 		GetLowerIds(ctx context.Context, memberId int64) (ids []int64, err error)
 		// GetComplexMemberIds 组合查找符合条件的用户ID
-		GetComplexMemberIds(ctx context.Context, memberIdx, opt string) (ids []int64, err error)
+		GetComplexMemberIds(ctx context.Context, memberIdx string, opt string) (ids []int64, err error)
 		// GetIdsByKeyword 根据关键词查找符合条件的用户ID
 		GetIdsByKeyword(ctx context.Context, ks string) (res []int64, err error)
 		// VerifySuperId 验证是否为超管
@@ -222,7 +222,7 @@ type (
 	}
 	IAdminRole interface {
 		// Verify 验证权限
-		Verify(ctx context.Context, path, method string) bool
+		Verify(ctx context.Context, path string, method string) bool
 		// List 获取列表
 		List(ctx context.Context, in *adminin.RoleListInp) (res *adminin.RoleListModel, totalCount int, err error)
 		// GetName 获取指定角色的名称

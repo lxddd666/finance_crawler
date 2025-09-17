@@ -13,3 +13,11 @@ const (
 const (
 	BollDefaultMultiple2 = 2
 )
+
+const (
+	PlotIndicatorKline = "kline"
+	PlotIndicatorMacd  = "macd"
+	PlotIndicatorBoll  = "boll"
+	PlotIndicatorKdj   = "kdj"
+	PlotIndicatorRsi   = "rsi"
+)

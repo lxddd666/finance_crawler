@@ -28,7 +28,7 @@ type FinanceDailyKline struct {
 	Md30       interface{} // 30日均线
 	Md60       interface{} // 60日均线
 	CreatedAt  *gtime.Time // 创建时间
-	UniqueKey  interface{} // 唯一键: timestamp_code_scale
+	Key        interface{} // 唯一键: timestamp_code_scale
 	Scale      interface{} // K线周期(分钟)
 	Day        interface{} // 日期(yyyy-MM-dd)
 }
