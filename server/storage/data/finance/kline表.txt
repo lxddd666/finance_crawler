@@ -1,23 +1,40 @@
-CREATE TABLE `hg_finance_code` (
+CREATE TABLE `hg_finance_macd` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '分类ID',
-  `code` varchar(20) NOT NULL COMMENT '代码',
-  `name` varchar(150) DEFAULT NULL COMMENT '名称',
-  `exchange` varchar(10) DEFAULT '' COMMENT '交易所',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5177 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='股票代码';
-
-
-CREATE TABLE `hg_finance_code_daily` (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '分类ID',
-  `code` varchar(20) NOT NULL COMMENT '代码',
-  `name` varchar(150) DEFAULT NULL COMMENT '名称',
-  `exchange` varchar(10) DEFAULT '' COMMENT '交易所',
-  `day` varchar(20) DEFAULT NULL COMMENT '日期',
+  `code` varchar(20) DEFAULT '' COMMENT 'code',
+  `fast_period` int DEFAULT NULL COMMENT '快线周期',
+  `slow_period` int DEFAULT NULL COMMENT '慢线周期',
+  `signal_period` int DEFAULT NULL COMMENT '信号周期',
+  `dif` float DEFAULT NULL COMMENT 'EMA12 - EMA26 快线',
+  `dea` float DEFAULT NULL COMMENT 'DIF的9日EMA（26+9-1)慢线',
+  `macd` float DEFAULT NULL COMMENT 'macd柱子',
   `timestamp` bigint DEFAULT NULL COMMENT '时间戳',
-  `status` tinyint DEFAULT '0' COMMENT '0未开始 1完成 -1失败',
+  `close_price` float DEFAULT NULL COMMENT '收盘价',
+  `kline_num` int DEFAULT '50' COMMENT 'k线根数',
+  `created_at` datetime DEFAULT NULL COMMENT '创建时间',
+  `key` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'timestamp和code组合',
+  `day` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '日期',
+  `scale` int DEFAULT NULL COMMENT '分钟一条k线',
   PRIMARY KEY (`id`),
-  KEY `idx_status` (`status`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=24193 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='股票代码_每日任务执行';
+  UNIQUE KEY `uidx_key` (`key`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=775619 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='macd线';
+
+CREATE TABLE `hg_finance_screening` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '分类ID',
+  `code` varchar(20) DEFAULT '' COMMENT 'code',
+  `boll` tinyint DEFAULT '0' COMMENT '满足boll',
+  `macd` tinyint DEFAULT '0' COMMENT '满足macd',
+  `kdj` tinyint DEFAULT '0' COMMENT '满足kdj',
+  `rsi` tinyint DEFAULT '0' COMMENT '满足rsi',
+  `close_price` float DEFAULT NULL COMMENT '收盘价',
+  `timestamp` bigint DEFAULT NULL COMMENT '时间戳',
+  `created_at` datetime DEFAULT NULL COMMENT '创建时间',
+  `key` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'timestamp和code组合',
+  `day` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '日期',
+  `scale` int DEFAULT NULL COMMENT '分钟一条k线',
+  `match_count` int DEFAULT NULL COMMENT '符合条件数量',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uidx_key` (`key`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=10660 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='筛股';
 
 CREATE TABLE `hg_finance_kline` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '分类ID',
@@ -36,7 +53,72 @@ CREATE TABLE `hg_finance_kline` (
   `day` varchar(50) DEFAULT NULL COMMENT '日期',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uidx_key` (`key`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=43136 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='k线';
+) ENGINE=InnoDB AUTO_INCREMENT=325790 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='k线';
+
+CREATE TABLE `hg_finance_kdj` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '分类ID',
+  `code` varchar(20) DEFAULT '' COMMENT 'code',
+  `k` float DEFAULT NULL COMMENT 'k值',
+  `d` float DEFAULT NULL COMMENT 'D值',
+  `j` float DEFAULT NULL COMMENT 'J值',
+  `close_price` float DEFAULT NULL COMMENT '收盘价',
+  `high_price` float DEFAULT NULL COMMENT '该K线最高价',
+  `low_price` float DEFAULT NULL COMMENT '该K线最低价',
+  `timestamp` bigint DEFAULT NULL COMMENT '时间戳',
+  `created_at` datetime DEFAULT NULL COMMENT '创建时间',
+  `key` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'timestamp和code组合',
+  `day` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '日期',
+  `scale` int DEFAULT NULL COMMENT '分钟一条k线',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uidx_key` (`key`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=775635 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='kdj';
+
+CREATE TABLE `hg_finance_daily_kline` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `code` varchar(20) DEFAULT '' COMMENT '股票代码',
+  `kline_type` tinyint DEFAULT '0' COMMENT 'K线类型: 0-普通 1-复权',
+  `timestamp` bigint DEFAULT NULL COMMENT '时间戳',
+  `open_price` decimal(10,4) DEFAULT NULL COMMENT '开盘价',
+  `close_price` decimal(10,4) DEFAULT NULL COMMENT '收盘价',
+  `high_price` decimal(10,4) DEFAULT NULL COMMENT '最高价',
+  `low_price` decimal(10,4) DEFAULT NULL COMMENT '最低价',
+  `volume` bigint DEFAULT NULL COMMENT '成交量',
+  `turnover` decimal(15,4) DEFAULT NULL COMMENT '成交额',
+  `md_5` decimal(10,4) DEFAULT NULL COMMENT '5日均线',
+  `md_10` decimal(10,4) DEFAULT NULL COMMENT '10日均线',
+  `md_20` decimal(10,4) DEFAULT NULL COMMENT '20日均线',
+  `md_30` decimal(10,4) DEFAULT NULL COMMENT '30日均线',
+  `md_60` decimal(10,4) DEFAULT NULL COMMENT '60日均线',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `key` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '唯一键: timestamp_code_scale',
+  `scale` int NOT NULL COMMENT 'K线周期(分钟)',
+  `day` varchar(50) DEFAULT NULL COMMENT '日期(yyyy-MM-dd)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uidx_unique_key` (`key`) USING BTREE,
+  KEY `idx_code_timestamp` (`code`,`timestamp`),
+  KEY `idx_day` (`day`)
+) ENGINE=InnoDB AUTO_INCREMENT=53484 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='股票日K线数据表';
+
+CREATE TABLE `hg_finance_code_daily` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '分类ID',
+  `code` varchar(20) NOT NULL COMMENT '代码',
+  `name` varchar(150) DEFAULT NULL COMMENT '名称',
+  `exchange` varchar(10) DEFAULT '' COMMENT '交易所',
+  `day` varchar(20) DEFAULT NULL COMMENT '日期',
+  `timestamp` bigint DEFAULT NULL COMMENT '时间戳',
+  `status` tinyint DEFAULT '0' COMMENT '0未开始 1完成 -1失败',
+  PRIMARY KEY (`id`),
+  KEY `idx_status` (`status`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=50053 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='股票代码_每日任务执行';
+
+CREATE TABLE `hg_finance_code` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '分类ID',
+  `code` varchar(20) NOT NULL COMMENT '代码',
+  `name` varchar(150) DEFAULT NULL COMMENT '名称',
+  `exchange` varchar(10) DEFAULT '' COMMENT '交易所',
+  `complete_code` varchar(20) DEFAULT NULL COMMENT '完整code',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5177 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='股票代码';
 
 CREATE TABLE `hg_finance_boll` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '分类ID',
@@ -55,33 +137,7 @@ CREATE TABLE `hg_finance_boll` (
   `key` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT 'timestamp和code组合',
   `day` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '日期',
   `scale` int DEFAULT NULL COMMENT '分钟一条k线',
+  `degree` float DEFAULT NULL COMMENT '层度',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uidx_key` (`key`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=140 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='boll带';
-
-
-CREATE TABLE `hg_finance_daily_kline` (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `code` varchar(20) DEFAULT '' COMMENT '股票代码',
-  `kline_type` tinyint DEFAULT '0' COMMENT 'K线类型: 0-普通 1-复权',
-  `timestamp` bigint DEFAULT NULL COMMENT '时间戳',
-  `open_price` decimal(10,4) DEFAULT NULL COMMENT '开盘价',
-  `close_price` decimal(10,4) DEFAULT NULL COMMENT '收盘价',
-  `high_price` decimal(10,4) DEFAULT NULL COMMENT '最高价',
-  `low_price` decimal(10,4) DEFAULT NULL COMMENT '最低价',
-  `volume` bigint DEFAULT NULL COMMENT '成交量',
-  `turnover` decimal(15,4) DEFAULT NULL COMMENT '成交额',
-  `md_5` decimal(10,4) COMMENT '5日均线',
-  `md_10` decimal(10,4) COMMENT '10日均线',
-  `md_20` decimal(10,4) COMMENT '20日均线',
-  `md_30` decimal(10,4) COMMENT '30日均线',
-  `md_60` decimal(10,4) COMMENT '60日均线',
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `unique_key` varchar(100) NOT NULL COMMENT '唯一键: timestamp_code_scale',
-  `scale` int NOT NULL COMMENT 'K线周期(分钟)',
-  `day` varchar(50) DEFAULT NULL COMMENT '日期(yyyy-MM-dd)',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uidx_unique_key` (`unique_key`) USING BTREE,
-  KEY `idx_code_timestamp` (`code`, `timestamp`),
-  KEY `idx_day` (`day`)
-) ENGINE=InnoDB AUTO_INCREMENT=43136 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='股票日K线数据表';
+) ENGINE=InnoDB AUTO_INCREMENT=20922 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='boll带';
