@@ -92,7 +92,7 @@ func (s *sSysFinanceBoll) Boll(ctx context.Context, data []*entity.FinanceKline,
 		Scale:             consts.ScaleDay,
 		Key:               lastKline.Key,
 	}
-	_, _ = dao.FinanceBoll.Ctx(ctx).InsertIgnore(boll)
+	_, err = dao.FinanceBoll.Ctx(ctx).InsertIgnore(boll)
 
 	return
 }

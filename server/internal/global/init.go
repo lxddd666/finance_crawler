@@ -79,6 +79,9 @@ func Init(ctx context.Context) {
 	// 获取当前时间未执行code
 	_ = GetDayData(ctx)
 
+	// 获取当前时间未执行指标
+	_ = GetDayIndicatorData(ctx)
+
 	// 解析代理文件
 	parseJsonFile(ctx)
 
@@ -422,6 +425,57 @@ func GetDayData(ctx context.Context) (err error) {
 
 				batch := codeDaily[i:end]
 				_, err = dao.FinanceCodeDaily.Ctx(ctx).Insert(batch)
+				if err != nil {
+					// 处理错误
+					return
+				}
+			}
+		}
+	}
+	return
+}
+
+func GetDayIndicatorData(ctx context.Context) (err error) {
+	today := time.Now().Truncate(24 * time.Hour)
+
+	// 获取当前时间
+	Timestamp = today.Unix()
+
+	Day = today.Format("2006-01-02")
+
+	// 获取当前任务
+	flag, _ := dao.FinanceIndicatorDaily.Ctx(ctx).Where(dao.FinanceIndicatorDaily.Columns().Day, Day).Exist()
+	if !flag {
+		// 删除过去的
+		_, err = dao.FinanceCodeDaily.Ctx(ctx).Where("1=1").Delete()
+		// 获取所有
+		var codeList []entity.FinanceCode
+		var codeDaily []entity.FinanceIndicatorDaily
+		err = dao.FinanceCode.Ctx(ctx).Scan(&codeList)
+		if err != nil {
+			return
+		}
+		for _, code := range codeList {
+			codeDaily = append(codeDaily, entity.FinanceIndicatorDaily{
+				Code:      code.Code,
+				Name:      code.Name,
+				Exchange:  code.Exchange,
+				Day:       Day,
+				Timestamp: Timestamp,
+				Status:    consts.TaskNotStarted,
+			})
+		}
+		if len(codeDaily) > 0 {
+			batchSize := 500
+
+			for i := 0; i < len(codeDaily); i += batchSize {
+				end := i + batchSize
+				if end > len(codeDaily) {
+					end = len(codeDaily)
+				}
+
+				batch := codeDaily[i:end]
+				_, err = dao.FinanceIndicatorDaily.Ctx(ctx).Insert(batch)
 				if err != nil {
 					// 处理错误
 					return

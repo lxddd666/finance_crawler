@@ -71,7 +71,7 @@ type (
 		// Model kdjORM模型
 		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
 		// Kdj Kdj计算
-		Kdj(ctx context.Context, data []*entity.FinanceKline, period int) []*entity.FinanceKdj
+		Kdj(ctx context.Context, data []*entity.FinanceKline, period int) (results []*entity.FinanceKdj, err error)
 		// CheckKDJBuySignal 判断KDJ买入信号
 		CheckKDJBuySignal(kdjValues []*entity.FinanceKdj, currentIndex int) sysin.BuySignal
 	}
@@ -86,7 +86,7 @@ type (
 		// Model macd线ORM模型
 		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
 		// Macd Macd计算
-		Macd(ctx context.Context, data []*entity.FinanceKline, slowPeriod int, fastPeriod int, signalPeriod int) (results []*entity.FinanceMacd)
+		Macd(ctx context.Context, data []*entity.FinanceKline, slowPeriod int, fastPeriod int, signalPeriod int) (results []*entity.FinanceMacd, err error)
 	}
 	ISysFinancePlot interface {
 		// Model plot图ORM模型
@@ -94,7 +94,12 @@ type (
 		// List 获取plot图列表
 		List(ctx context.Context, in *sysin.FinancePlotListInp) (list []*sysin.FinancePlotListModel, totalCount int, err error)
 		// CreatePlot 指标图创建
-		CreatePlot(ctx context.Context, create sysin.FinancePlotCreate) (err error)
+		CreatePlot(ctx context.Context, in sysin.FinancePlotCreate) (err error)
+		KlinePlot(ctx context.Context, code string)
+		MacdPlot(ctx context.Context, code string)
+		KdjPlot(ctx context.Context, code string)
+		BollPlot(ctx context.Context, code string)
+		RsiPlot(ctx context.Context, code string)
 	}
 	ISysFinanceScreening interface {
 		// Model 筛股ORM模型

@@ -37,9 +37,9 @@ func (s *sSysFinanceKdj) Model(ctx context.Context, option ...*handler.Option) *
 }
 
 // Kdj Kdj计算
-func (s *sSysFinanceKdj) Kdj(ctx context.Context, data []*entity.FinanceKline, period int) []*entity.FinanceKdj {
+func (s *sSysFinanceKdj) Kdj(ctx context.Context, data []*entity.FinanceKline, period int) (results []*entity.FinanceKdj, err error) {
 	if len(data) < period {
-		return nil
+		return nil, nil
 	}
 
 	// 设置默认周期为9
@@ -47,7 +47,7 @@ func (s *sSysFinanceKdj) Kdj(ctx context.Context, data []*entity.FinanceKline, p
 		period = 9
 	}
 
-	results := make([]*entity.FinanceKdj, len(data))
+	results = make([]*entity.FinanceKdj, len(data))
 
 	// 初始化K、D值（通常设为50）
 	prevK := 50.0
@@ -114,10 +114,10 @@ func (s *sSysFinanceKdj) Kdj(ctx context.Context, data []*entity.FinanceKline, p
 		}
 	}
 	if len(results) > 0 {
-		_, _ = dao.FinanceKdj.Ctx(ctx).InsertIgnore(results)
+		_, err = dao.FinanceKdj.Ctx(ctx).InsertIgnore(results)
 	}
 
-	return results
+	return
 }
 
 // CheckKDJBuySignal 判断KDJ买入信号

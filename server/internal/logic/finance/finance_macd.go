@@ -35,9 +35,9 @@ func (s *sSysFinanceMacd) Model(ctx context.Context, option ...*handler.Option) 
 }
 
 // Macd Macd计算
-func (s *sSysFinanceMacd) Macd(ctx context.Context, data []*entity.FinanceKline, slowPeriod int, fastPeriod int, signalPeriod int) (results []*entity.FinanceMacd) {
+func (s *sSysFinanceMacd) Macd(ctx context.Context, data []*entity.FinanceKline, slowPeriod int, fastPeriod int, signalPeriod int) (results []*entity.FinanceMacd, err error) {
 	if len(data) < fastPeriod {
-		return nil
+		return nil, nil
 	}
 	klineNum := len(data)
 	codeInfo := data[0]
@@ -95,7 +95,7 @@ func (s *sSysFinanceMacd) Macd(ctx context.Context, data []*entity.FinanceKline,
 	}
 
 	if len(results) > 0 {
-		_, _ = dao.FinanceMacd.Ctx(ctx).InsertIgnore(results)
+		_, err = dao.FinanceMacd.Ctx(ctx).InsertIgnore(results)
 	}
 	return
 }

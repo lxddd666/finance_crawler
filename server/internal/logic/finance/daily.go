@@ -71,40 +71,59 @@ func (s *sSysFinanceCode) CodeDailyKlineStart(ctx context.Context) (err error) {
 
 // DailyIndicator 获取每日指标
 func (s *sSysFinanceCode) DailyIndicator(ctx context.Context) (err error) {
-	codeList, err := s.GetAllCode(ctx)
-	if err != nil {
-		return
-	}
-	wg := &sync.WaitGroup{}
-	concurrencyLimit := 20
-	semaphore := make(chan struct{}, concurrencyLimit)
-
-	for _, financeCode := range codeList {
-		wg.Add(1)
-		semaphore <- struct{}{}
-
-		simple.SafeGo(gctx.New(), func(ctx context.Context) {
-			defer wg.Done()
-			defer func() {
-				// 释放信号量
-				<-semaphore
-			}()
-			code := stock.GetCode(financeCode.Code, financeCode.Exchange)
-			klineList, gErr := s.GetCodeKline(ctx, code, 50)
-			if gErr != nil {
-				err = gErr
-				return
+	simple.SafeGo(gctx.New(), func(ctx context.Context) {
+		defer func() {
+			// 递归
+			count, _ := dao.FinanceIndicatorDaily.Ctx(ctx).WhereNot(dao.FinanceIndicatorDaily.Columns().Status, consts.TaskComplete).Count()
+			if count > 0 {
+				if global.ProxyList.Size() > 0 {
+					_ = s.DailyIndicator(ctx)
+				}
 			}
-			_, _, _ = service.SysFinanceBoll().Boll(ctx, klineList, consts.BollDefaultMultiple2)
-			// macd
-			_ = service.SysFinanceMacd().Macd(ctx, klineList, consts.MacdDefaultSlowPeriod12, consts.MacdDefaultFastPeriod26, consts.MacdDefaultSignalPeriod9)
-			//// kdj
-			_ = service.SysFinanceKdj().Kdj(ctx, klineList, consts.KdjDefaultPeriod9)
-			// 均线
-			stock.ReverseKline(klineList)
-			_ = service.SysFinanceDailyKline().MovingAverage(ctx, klineList)
-		})
-	}
-	wg.Wait()
+
+		}()
+
+		codeDaily := make([]*entity.FinanceCodeDaily, 0)
+		err = dao.FinanceIndicatorDaily.Ctx(ctx).WhereNot(dao.FinanceIndicatorDaily.Columns().Status, consts.TaskComplete).Scan(&codeDaily)
+		if err != nil {
+			return
+		}
+		wg := &sync.WaitGroup{}
+		concurrencyLimit := 20
+		semaphore := make(chan struct{}, concurrencyLimit)
+
+		for _, financeCode := range codeDaily {
+			wg.Add(1)
+			semaphore <- struct{}{}
+
+			simple.SafeGo(gctx.New(), func(ctx context.Context) {
+				defer wg.Done()
+				defer func() {
+					if err != nil {
+						_, _ = dao.FinanceIndicatorDaily.Ctx(ctx).Where(dao.FinanceIndicatorDaily.Columns().Code, financeCode.Code).Update(do.FinanceCodeDaily{Status: consts.TaskFail})
+					} else {
+						_, _ = dao.FinanceIndicatorDaily.Ctx(ctx).Where(dao.FinanceIndicatorDaily.Columns().Code, financeCode.Code).Update(do.FinanceCodeDaily{Status: consts.TaskComplete})
+					}
+					// 释放信号量
+					<-semaphore
+				}()
+				code := stock.GetCode(financeCode.Code, financeCode.Exchange)
+				klineList, gErr := s.GetCodeKline(ctx, code, 50)
+				if gErr != nil {
+					err = gErr
+					return
+				}
+				_, _, err = service.SysFinanceBoll().Boll(ctx, klineList, consts.BollDefaultMultiple2)
+				// macd
+				_, err = service.SysFinanceMacd().Macd(ctx, klineList, consts.MacdDefaultSlowPeriod12, consts.MacdDefaultFastPeriod26, consts.MacdDefaultSignalPeriod9)
+				//// kdj
+				_, err = service.SysFinanceKdj().Kdj(ctx, klineList, consts.KdjDefaultPeriod9)
+				// 均线
+				stock.ReverseKline(klineList)
+				err = service.SysFinanceDailyKline().MovingAverage(ctx, klineList)
+			})
+		}
+		wg.Wait()
+	})
 	return
 }
