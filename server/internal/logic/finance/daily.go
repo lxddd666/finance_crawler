@@ -55,7 +55,7 @@ func (s *sSysFinanceCode) CodeDailyKlineStart(ctx context.Context) (err error) {
 				}()
 				// sz002095
 				stockCode := fmt.Sprintf("%s%s", gstr.ToLower(code.Exchange), code.Code)
-				_, gErr := service.SysFinanceKline().Kline(ctx, stockCode, consts.MaNo, consts.ScaleDay, 2, proxyFlag)
+				_, gErr := service.SysFinanceKline().Kline(ctx, stockCode, consts.MaNo, consts.ScaleDay, 150, proxyFlag)
 				if gErr != nil {
 					_, _ = dao.FinanceCodeDaily.Ctx(ctx).Where(dao.FinanceCodeDaily.Columns().Code, code.Code).Update(do.FinanceCodeDaily{Status: consts.TaskFail})
 				} else {
