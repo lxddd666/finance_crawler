@@ -2,9 +2,11 @@ package sys
 
 import (
 	"context"
+	"fmt"
 	"hotgo/internal/dao"
 	"hotgo/internal/model/entity"
 	"hotgo/internal/service"
+	"time"
 )
 
 func (s *sSysTestFinance) MovingAverageLaboratory(ctx context.Context) {
@@ -23,4 +25,31 @@ func (s *sSysTestFinance) MovingAverageLaboratory(ctx context.Context) {
 		}
 
 	}
+}
+
+// 判断目标日期是否在起始日期和结束日期之间（包含边界）
+func isDateInRange(startDateStr, endDateStr, targetDateStr string) (bool, error) {
+	// 解析日期字符串，格式为 "2006-01-02"
+	startDate, err := time.Parse("2006-01-02", startDateStr)
+	if err != nil {
+		return false, fmt.Errorf("解析起始日期失败: %v", err)
+	}
+
+	endDate, err := time.Parse("2006-01-02", endDateStr)
+	if err != nil {
+		return false, fmt.Errorf("解析结束日期失败: %v", err)
+	}
+
+	targetDate, err := time.Parse("2006-01-02", targetDateStr)
+	if err != nil {
+		return false, fmt.Errorf("解析目标日期失败: %v", err)
+	}
+
+	// 判断目标日期是否在区间内（包含边界）
+	if (targetDate.Equal(startDate) || targetDate.After(startDate)) &&
+		(targetDate.Equal(endDate) || targetDate.Before(endDate)) {
+		return true, nil
+	}
+
+	return false, nil
 }
