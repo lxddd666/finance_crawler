@@ -23,7 +23,9 @@ import (
 	"hotgo/internal/service"
 	"hotgo/utility/convert"
 	"hotgo/utility/excel"
-	"hotgo/utility/stock"
+	"hotgo/utility/simple"
+	"math"
+	"sync"
 )
 
 type sSysTestFinance struct{}
@@ -219,88 +221,435 @@ func (s *sSysTestFinance) Start(ctx context.Context) (err error) {
 	if err != nil {
 		return
 	}
-
+	wg := sync.WaitGroup{}
+	// 创建大小为5的并发限制通道
+	concurrencyLimit := 5
+	semaphore := make(chan struct{}, concurrencyLimit)
 	for _, financeCode := range codeList {
-		code := stock.GetCode(financeCode.Code, financeCode.Exchange)
-		klineList, gErr := service.SysFinanceCode().GetCodeKline(ctx, code, 50)
-		stock.ReverseKline(klineList)
-
-		if gErr != nil {
-			err = gErr
-			return
-		}
-		_ = service.SysFinanceDailyKline().MovingAverage(ctx, klineList)
+		wg.Add(1)
+		semaphore <- struct{}{}
+		simple.SafeGo(gctx.New(), func(ctx context.Context) {
+			defer wg.Done()
+			defer func() {
+				// 释放信号量
+				<-semaphore
+			}()
+			klineList, _ := service.SysFinanceCode().GetCodeKline(ctx, financeCode.CompleteCode, 0)
+			// 方法 1 推荐
+			trendPlotList := FindZigZagPointsWithKLine(klineList, 2)
+			var trendPlotListV2 []*entity.FinanceKline
+			for _, trendPlot := range trendPlotList {
+				trendPlotListV2 = append(trendPlotListV2, trendPlot.KLine)
+			}
+			//err = service.SysFinancePlot().TrendPlot(ctx, klineList, trendPlotListV2)
+			fmt.Println(err)
+		})
 	}
+	wg.Wait()
+
 	return
 }
 
+// // 如果你希望将所有波峰和波谷合并到一个列表中，可以使用这个函数
+func FindAllTurningPoints(klines []*entity.FinanceKline, window int) []*entity.FinanceKline {
+	allPoints := make([]*entity.FinanceKline, 0)
+
+	n := len(klines)
+	if n < window*2 {
+		return allPoints
+	}
+
+	for i := window; i < n-window; i++ {
+		// 检查是否为波峰
+		isPeak := true
+		for j := i - window; j <= i+window; j++ {
+			if j == i {
+				continue
+			}
+			if klines[j].ClosePrice >= klines[i].ClosePrice {
+				isPeak = false
+				break
+			}
+		}
+
+		// 检查是否为波谷
+		isTrough := true
+		for j := i - window; j <= i+window; j++ {
+			if j == i {
+				continue
+			}
+			if klines[j].ClosePrice <= klines[i].ClosePrice {
+				isTrough = false
+				break
+			}
+		}
+
+		if isPeak || isTrough {
+			allPoints = append(allPoints, klines[i])
+		}
+	}
+
+	return allPoints
+}
+
+// // 法2
 //
-//func example (ctx context.Context) (err error) {
-//	//AToken := "1b48ab3a3f318e1db193f5de915d4583-c-app"
-//	/*
-//		将如下JSON进行url的encode，复制到http的查询字符串的query字段里
-//		{"trace" : "go_http_test1","data" : {"code" : "700.HK","kline_type" : 1,"kline_timestamp_end" : 0,"query_kline_num" : 2,"adjust_type": 0}}
-//
-//		特别注意：
-//		github: https://github.com/alltick/realtime-forex-crypto-stock-tick-finance-websocket-api
-//		token申请：https://alltick.co
-//		把下面url中的testtoken替换为您自己的token
-//		外汇，加密货币（数字币），贵金属的api址：
-//		https://quote.alltick.io/quote-b-api
-//		股票api地址:
-//		https://quote.alltick.io/quote-stock-b-api
-//	*/
-//	url := "https://quote.alltick.io/quote-stock-b-api/kline"
-//	log.Println("请求内容：", url)
-//
-//	req, err := http.NewRequest("GET", url, nil)
-//	if err != nil {
-//		fmt.Println("Error creating request:", err)
-//		return nil
-//	}
-//
-//	q := req.URL.Query()
-//	q.Add("token", global.FinanceConfig.AlltickToken)
-//
-//	// 创建 FinanceAlltickRequest 实例
-//	financeRequest := &entity.FinanceAlltickRequest{
-//		Code:              "AAPL.US",
-//		KlineType:         8,
-//		KlineTimestampEnd: 0,
-//		QueryKlineNum:     20,
-//		AdjustType:        0,
-//	}
-//
-//	// 使用转换方法生成查询字符串
-//	queryStr, err := s.ConvertToQueryString(financeRequest)
-//	if err != nil {
-//		fmt.Println("Error converting request to query string:", err)
-//		return nil
-//	}
-//	q.Add("query", queryStr)
-//	req.URL.RawQuery = q.Encode()
-//	// 发送请求
-//	resp, err := http.DefaultClient.Do(req)
-//	if err != nil {
-//		fmt.Println("Error sending request:", err)
-//		return nil
-//	}
-//	defer resp.Body.Close()
-//
-//	body2, err := ioutil.ReadAll(resp.Body)
-//
-//	if err != nil {
-//
-//		log.Println("读取响应失败：", err)
-//
-//		return nil
-//
-//	}
-//	var response entity.FinanceAlltickResponse
-//	err = gconv.Scan(body2, &response)
-//
-//	if err != nil {
-//		return err
-//	}
-//	return
-//}
+// // 修改后的ZigZag算法，返回包含KLine的转折点
+type ZigZagPointWithKLine struct {
+	KLine    *entity.FinanceKline
+	Index    int
+	IsPeak   bool
+	Strength float64 // 波动强度
+}
+
+// 返回包含KLine的转折点列表
+func FindZigZagPointsWithKLine(klines []*entity.FinanceKline, minChangePercent float64) []ZigZagPointWithKLine {
+	if len(klines) < 3 {
+		return nil
+	}
+
+	var points []ZigZagPointWithKLine
+	lastExtreme := 0 // 上一个极值点索引
+	lastIsPeak := klines[1].ClosePrice > klines[0].ClosePrice
+
+	for i := 1; i < len(klines)-1; i++ {
+		current := klines[i].ClosePrice
+		prev := klines[i-1].ClosePrice
+		next := klines[i+1].ClosePrice
+
+		// 检测波峰
+		if current > prev && current > next {
+			change := math.Abs((current - klines[lastExtreme].ClosePrice) / klines[lastExtreme].ClosePrice * 100)
+
+			if change >= minChangePercent {
+				points = append(points, ZigZagPointWithKLine{
+					KLine:    klines[i],
+					Index:    i,
+					IsPeak:   true,
+					Strength: change,
+				})
+				lastExtreme = i
+				lastIsPeak = true
+			}
+		}
+
+		// 检测波谷
+		if current < prev && current < next {
+			change := math.Abs((current - klines[lastExtreme].ClosePrice) / klines[lastExtreme].ClosePrice * 100)
+
+			if change >= minChangePercent {
+				points = append(points, ZigZagPointWithKLine{
+					KLine:    klines[i],
+					Index:    i,
+					IsPeak:   false,
+					Strength: change,
+				})
+				lastExtreme = i
+				lastIsPeak = false
+			}
+		}
+	}
+	fmt.Println(lastIsPeak)
+	return points
+}
+
+// 如果你只需要返回KLine列表（不包含其他信息）
+func FindZigZagKLinePoints(klines []*entity.FinanceKline, minChangePercent float64) []*entity.FinanceKline {
+	zigzagPoints := FindZigZagPointsWithKLine(klines, minChangePercent)
+	klinePoints := make([]*entity.FinanceKline, len(zigzagPoints))
+
+	for i, point := range zigzagPoints {
+		klinePoints[i] = point.KLine
+	}
+
+	return klinePoints
+}
+
+// 如果你想要分别获取波峰和波谷的KLine列表
+func FindZigZagPeaksAndTroughs(klines []*entity.FinanceKline, minChangePercent float64) ([]*entity.FinanceKline, []*entity.FinanceKline) {
+	zigzagPoints := FindZigZagPointsWithKLine(klines, minChangePercent)
+	peaks := make([]*entity.FinanceKline, 0)
+	troughs := make([]*entity.FinanceKline, 0)
+
+	for _, point := range zigzagPoints {
+		if point.IsPeak {
+			peaks = append(peaks, point.KLine)
+		} else {
+			troughs = append(troughs, point.KLine)
+		}
+	}
+
+	return peaks, troughs
+}
+
+// 增强版本：修复原算法中的问题并添加更多功能
+func FindZigZagPointsEnhanced(klines []*entity.FinanceKline, minChangePercent float64) []ZigZagPointWithKLine {
+	if len(klines) < 3 {
+		return nil
+	}
+
+	var points []ZigZagPointWithKLine
+
+	// 首先找到第一个极值点
+	lastExtreme := findFirstExtreme(klines)
+	if lastExtreme < 0 {
+		return points
+	}
+
+	// 添加第一个极值点
+	firstPoint := createZigZagPoint(klines, lastExtreme)
+	points = append(points, firstPoint)
+
+	// 继续寻找后续的转折点
+	for i := lastExtreme + 1; i < len(klines)-1; i++ {
+		current := klines[i].ClosePrice
+		prev := klines[i-1].ClosePrice
+		next := klines[i+1].ClosePrice
+
+		isPeak := current > prev && current > next
+		isTrough := current < prev && current < next
+
+		if isPeak || isTrough {
+			// 计算与上一个转折点的变化幅度
+			lastPoint := points[len(points)-1]
+			change := math.Abs((current - lastPoint.KLine.ClosePrice) / lastPoint.KLine.ClosePrice * 100)
+
+			if change >= minChangePercent {
+				newPoint := createZigZagPoint(klines, i)
+				points = append(points, newPoint)
+			}
+		}
+	}
+
+	return points
+}
+
+// 辅助函数：找到第一个极值点
+func findFirstExtreme(klines []*entity.FinanceKline) int {
+	for i := 1; i < len(klines)-1; i++ {
+		current := klines[i].ClosePrice
+		prev := klines[i-1].ClosePrice
+		next := klines[i+1].ClosePrice
+
+		if (current > prev && current > next) || (current < prev && current < next) {
+			return i
+		}
+	}
+	return -1
+}
+
+// 辅助函数：创建ZigZag点
+func createZigZagPoint(klines []*entity.FinanceKline, index int) ZigZagPointWithKLine {
+	current := klines[index].ClosePrice
+	prev := klines[index-1].ClosePrice
+	next := klines[index+1].ClosePrice
+
+	isPeak := current > prev && current > next
+
+	return ZigZagPointWithKLine{
+		KLine:  klines[index],
+		Index:  index,
+		IsPeak: isPeak,
+	}
+}
+
+// 方法 3
+// 计算移动平均线
+func CalculateMA(klines []*entity.FinanceKline, period int) []float64 {
+	ma := make([]float64, len(klines))
+
+	for i := period - 1; i < len(klines); i++ {
+		sum := 0.0
+		for j := i - period + 1; j <= i; j++ {
+			sum += klines[j].ClosePrice
+		}
+		ma[i] = sum / float64(period)
+	}
+
+	return ma
+}
+
+// 基于MA的趋势转折点检测
+type TrendPoint struct {
+	Kline      *entity.FinanceKline
+	Price      float64
+	TrendType  string // "up", "down", "consolidation"
+	Confidence float64
+}
+
+func FindTrendTurningPoints(klines []*entity.FinanceKline, shortPeriod, longPeriod int) []TrendPoint {
+	shortMA := CalculateMA(klines, shortPeriod)
+	longMA := CalculateMA(klines, longPeriod)
+
+	var points []TrendPoint
+
+	for i := longPeriod; i < len(klines); i++ {
+		// 金叉：短期MA上穿长期MA
+		if shortMA[i] > longMA[i] && shortMA[i-1] <= longMA[i-1] {
+			confidence := math.Abs((shortMA[i]-longMA[i])/longMA[i]) * 100
+
+			points = append(points, TrendPoint{
+				Kline:      klines[i],
+				Price:      klines[i].ClosePrice,
+				TrendType:  "up",
+				Confidence: confidence,
+			})
+		}
+
+		// 死叉：短期MA下穿长期MA
+		if shortMA[i] < longMA[i] && shortMA[i-1] >= longMA[i-1] {
+			confidence := math.Abs((longMA[i]-shortMA[i])/longMA[i]) * 100
+
+			points = append(points, TrendPoint{
+				Kline:      klines[i],
+				Price:      klines[i].ClosePrice,
+				TrendType:  "down",
+				Confidence: confidence,
+			})
+		}
+	}
+
+	return points
+}
+
+// 方法4
+type WaveAnalysis struct {
+	Waves         []Wave
+	TurningPoints []TurningPoint
+	Pattern       string // "W", "M", "Uptrend", "Downtrend"
+}
+
+type Wave struct {
+	StartIndex int
+	EndIndex   int
+	Type       string // "up", "down"
+	Height     float64
+	Duration   int
+}
+
+type TurningPoint struct {
+	Kline      *entity.FinanceKline
+	Index      int
+	Price      float64
+	Type       string // "peak", "trough"
+	Confidence float64
+}
+
+func AnalyzeWavePattern(klines []*entity.FinanceKline) WaveAnalysis {
+	analysis := WaveAnalysis{}
+
+	// 1. 找到所有转折点
+	zigzagPoints := FindZigZagPoints(klines, 2.0) // 最小2%波动
+
+	// 2. 识别波浪
+	if len(zigzagPoints) >= 3 {
+		for i := 0; i < len(zigzagPoints)-1; i++ {
+			current := zigzagPoints[i]
+			next := zigzagPoints[i+1]
+
+			wave := Wave{
+				StartIndex: current.Index,
+				EndIndex:   next.Index,
+				Height:     math.Abs(next.Price - current.Price),
+				Duration:   next.Index - current.Index,
+			}
+
+			if current.IsPeak && !next.IsPeak {
+				wave.Type = "down"
+			} else if !current.IsPeak && next.IsPeak {
+				wave.Type = "up"
+			}
+
+			analysis.Waves = append(analysis.Waves, wave)
+		}
+
+		// 3. 识别模式（如W底）
+		analysis.Pattern = identifyPattern(analysis.Waves, klines)
+	}
+
+	return analysis
+}
+
+func identifyPattern(waves []Wave, klines []*entity.FinanceKline) string {
+	if len(waves) < 4 {
+		return "unknown"
+	}
+
+	// 简单的W底模式识别
+	for i := 0; i < len(waves)-3; i++ {
+		// 检查是否形成下跌-上涨-下跌-上涨的波浪序列
+		if waves[i].Type == "down" && waves[i+1].Type == "up" &&
+			waves[i+2].Type == "down" && waves[i+3].Type == "up" {
+
+			// 检查第二个低点是否高于或等于第一个低点（W底特征）
+			firstLow := math.Min(klines[waves[i].StartIndex].ClosePrice, klines[waves[i].EndIndex].ClosePrice)
+			secondLow := math.Min(klines[waves[i+2].StartIndex].ClosePrice, klines[waves[i+2].EndIndex].ClosePrice)
+
+			if secondLow >= firstLow {
+				return "W_bottom"
+			}
+		}
+	}
+
+	return "complex_wave"
+}
+
+func FindZigZagPoints(klines []*entity.FinanceKline, minChangePercent float64) []ZigZagPoint {
+	if len(klines) < 3 {
+		return nil
+	}
+
+	var points []ZigZagPoint
+	lastExtreme := 0 // 上一个极值点索引
+	lastIsPeak := klines[1].ClosePrice > klines[0].ClosePrice
+
+	for i := 1; i < len(klines)-1; i++ {
+		current := klines[i].ClosePrice
+		prev := klines[i-1].ClosePrice
+		next := klines[i+1].ClosePrice
+
+		// 检测波峰
+		if current > prev && current > next {
+			change := math.Abs((current - klines[lastExtreme].ClosePrice) / klines[lastExtreme].ClosePrice * 100)
+
+			if change >= minChangePercent {
+				points = append(points, ZigZagPoint{
+					Index:    i,
+					Kline:    klines[i],
+					Price:    current,
+					IsPeak:   true,
+					Strength: change,
+				})
+				lastExtreme = i
+				lastIsPeak = true
+			}
+		}
+
+		// 检测波谷
+		if current < prev && current < next {
+			change := math.Abs((current - klines[lastExtreme].ClosePrice) / klines[lastExtreme].ClosePrice * 100)
+
+			if change >= minChangePercent {
+				points = append(points, ZigZagPoint{
+					Kline:    klines[i],
+					Index:    i,
+					Price:    current,
+					IsPeak:   false,
+					Strength: change,
+				})
+				lastExtreme = i
+				lastIsPeak = false
+			}
+		}
+	}
+	fmt.Println(lastIsPeak)
+	return points
+}
+
+type ZigZagPoint struct {
+	Index    int
+	Kline    *entity.FinanceKline
+	Price    float64
+	IsPeak   bool
+	Strength float64 // 波动强度
+}

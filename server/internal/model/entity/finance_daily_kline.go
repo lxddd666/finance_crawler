@@ -29,4 +29,5 @@ type FinanceDailyKline struct {
 	Key        string      `json:"key"        orm:"key"         description:"唯一键: timestamp_code_scale"`
 	Scale      int         `json:"scale"      orm:"scale"       description:"K线周期(分钟)"`
 	Day        string      `json:"day"        orm:"day"         description:"日期(yyyy-MM-dd)"`
+	Md50       float64     `json:"md50"       orm:"md_50"       description:"50日均线"`
 }

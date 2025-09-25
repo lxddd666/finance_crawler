@@ -31,4 +31,5 @@ type FinanceDailyKline struct {
 	Key        interface{} // 唯一键: timestamp_code_scale
 	Scale      interface{} // K线周期(分钟)
 	Day        interface{} // 日期(yyyy-MM-dd)
+	Md50       interface{} // 50日均线
 }

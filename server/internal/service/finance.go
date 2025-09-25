@@ -66,6 +66,8 @@ type (
 		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
 		// MovingAverage 均线计算
 		MovingAverage(ctx context.Context, klineList []*entity.FinanceKline) (err error)
+		// CalculateMAOptimized 计算每天均线
+		CalculateMAOptimized(klines []*entity.FinanceKline) []entity.FinanceDailyKline
 	}
 	ISysFinanceKdj interface {
 		// Model kdjORM模型
@@ -100,6 +102,7 @@ type (
 		KdjPlot(ctx context.Context, code string)
 		BollPlot(ctx context.Context, code string)
 		RsiPlot(ctx context.Context, code string)
+		TrendPlot(ctx context.Context, klineList []*entity.FinanceKline, trendList []*entity.FinanceKline) (err error)
 	}
 	ISysFinanceScreening interface {
 		// Model 筛股ORM模型

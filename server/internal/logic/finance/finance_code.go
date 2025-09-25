@@ -273,10 +273,11 @@ func (s *sSysFinanceCode) GetAllCode(ctx context.Context) (codeList []*entity.Fi
 
 // GetCodeKline 获取股票k线
 func (s *sSysFinanceCode) GetCodeKline(ctx context.Context, code string, KlineNum int) (list []*entity.FinanceKline, err error) {
+	mod := dao.FinanceKline.Ctx(ctx).Where(dao.FinanceKline.Columns().Code, code).OrderDesc(dao.FinanceKline.Columns().Day)
 	if KlineNum == 0 {
-		KlineNum = 50
+		mod = mod.Limit(KlineNum)
 	}
-	err = dao.FinanceKline.Ctx(ctx).Where(dao.FinanceKline.Columns().Code, code).OrderDesc(dao.FinanceKline.Columns().Day).Limit(KlineNum).Scan(&list)
+	err = mod.Scan(&list)
 	if err != nil {
 		return
 	}
