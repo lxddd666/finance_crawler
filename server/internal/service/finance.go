@@ -131,6 +131,8 @@ type (
 		Status(ctx context.Context, in *sysin.TestFinanceStatusInp) (err error)
 		// Start 更新测试分类状态
 		Start(ctx context.Context) (err error)
+		// MovingAverageLaboratory 移动平均线试验
+		MovingAverageLaboratory(ctx context.Context)
 	}
 )
 

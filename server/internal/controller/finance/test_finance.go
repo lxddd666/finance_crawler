@@ -86,6 +86,7 @@ func (c *cTestFinance) Status(ctx context.Context, req *testfinance.StatusReq) (
 
 // Start 开始测试
 func (c *cTestFinance) Start(ctx context.Context, req *testfinance.StartReq) (res *testfinance.StartRes, err error) {
-	err = service.SysTestFinance().Start(ctx)
+	//err = service.SysTestFinance().Start(ctx)
+	service.SysTestFinance().MovingAverageLaboratory(ctx)
 	return
 }

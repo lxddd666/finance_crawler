@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// MovingAverageLaboratory 移动平均线试验
 func (s *sSysTestFinance) MovingAverageLaboratory(ctx context.Context) {
 	codeList, err := service.SysFinanceCode().GetAllCode(ctx)
 	if err != nil {
@@ -16,14 +17,19 @@ func (s *sSysTestFinance) MovingAverageLaboratory(ctx context.Context) {
 	}
 
 	for _, code := range codeList {
-		klineList, _ := service.SysFinanceCode().GetCodeKline(ctx, code.CompleteCode, 0)
+		klineList, _ := service.SysFinanceCode().GetCodeKline(ctx, code.CompleteCode, 100)
 		var trendList []*entity.FinanceKlineZigzagTrend
-		_ = dao.FinanceKlineZigzagTrend.Ctx(ctx).Where(dao.FinanceKlineZigzagTrend.Columns().Code, code.CompleteCode).Scan(&trendList)
-		klineDailyMap := make(map[string]*entity.FinanceKline)
-		for _, kline := range klineList {
-			klineDailyMap[kline.Day] = kline
-		}
+		var trendListScan []*entity.FinanceKlineZigzagTrend
+		// 100条k线所有时间的zigzag标记
+		trendList = append(trendList, &entity.FinanceKlineZigzagTrend{Code: klineList[0].Code, KlineId: klineList[0].Id, Key: klineList[0].Key, MinChangePercent: 1, Day: klineList[0].Day})
+		_ = dao.FinanceKlineZigzagTrend.Ctx(ctx).Where(dao.FinanceKlineZigzagTrend.Columns().Code, code.CompleteCode).Scan(&trendListScan)
+		trendList = append(trendList, trendListScan...)
+		trendList = append(trendList, &entity.FinanceKlineZigzagTrend{Code: klineList[len(klineList)-1].Code, KlineId: klineList[len(klineList)-1].Id, Key: klineList[len(klineList)-1].Key, MinChangePercent: 1, Day: klineList[len(klineList)-1].Day})
 
+		trendDayMap := make(map[string]float64)
+		for _, kline := range klineList {
+
+		}
 	}
 }
 
