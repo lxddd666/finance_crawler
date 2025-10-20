@@ -8,15 +8,15 @@ import (
 	"hotgo/internal/dao/internal"
 )
 
-// financeIndicatorDailyDao is the data access object for the table hg_finance_indicator_daily.
+// financeRsiDao is the data access object for the table hg_finance_rsi.
 // You can define custom methods on it to extend its functionality as needed.
-type financeIndicatorDailyDao struct {
-	*internal.FinanceIndicatorDailyDao
+type financeRsiDao struct {
+	*internal.FinanceRsiDao
 }
 
 var (
-	// FinanceIndicatorDaily is a globally accessible object for table hg_finance_indicator_daily operations.
-	FinanceIndicatorDaily = financeIndicatorDailyDao{internal.NewFinanceIndicatorDailyDao()}
+	// FinanceRsi is a globally accessible object for table hg_finance_rsi operations.
+	FinanceRsi = financeRsiDao{internal.NewFinanceRsiDao()}
 )
 
 // Add your custom methods and functionality below.

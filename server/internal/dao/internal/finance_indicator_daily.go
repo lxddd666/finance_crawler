@@ -13,9 +13,10 @@ import (
 
 // FinanceIndicatorDailyDao is the data access object for the table hg_finance_indicator_daily.
 type FinanceIndicatorDailyDao struct {
-	table   string                       // table is the underlying table name of the DAO.
-	group   string                       // group is the database configuration group name of the current DAO.
-	columns FinanceIndicatorDailyColumns // columns contains all the column names of Table for convenient usage.
+	table    string                       // table is the underlying table name of the DAO.
+	group    string                       // group is the database configuration group name of the current DAO.
+	columns  FinanceIndicatorDailyColumns // columns contains all the column names of Table for convenient usage.
+	handlers []gdb.ModelHandler           // handlers for customized model modification.
 }
 
 // FinanceIndicatorDailyColumns defines and stores column names for the table hg_finance_indicator_daily.
@@ -41,11 +42,12 @@ var financeIndicatorDailyColumns = FinanceIndicatorDailyColumns{
 }
 
 // NewFinanceIndicatorDailyDao creates and returns a new DAO object for table data access.
-func NewFinanceIndicatorDailyDao() *FinanceIndicatorDailyDao {
+func NewFinanceIndicatorDailyDao(handlers ...gdb.ModelHandler) *FinanceIndicatorDailyDao {
 	return &FinanceIndicatorDailyDao{
-		group:   "default",
-		table:   "hg_finance_indicator_daily",
-		columns: financeIndicatorDailyColumns,
+		group:    "default",
+		table:    "hg_finance_indicator_daily",
+		columns:  financeIndicatorDailyColumns,
+		handlers: handlers,
 	}
 }
 
@@ -71,7 +73,11 @@ func (dao *FinanceIndicatorDailyDao) Group() string {
 
 // Ctx creates and returns a Model for the current DAO. It automatically sets the context for the current operation.
 func (dao *FinanceIndicatorDailyDao) Ctx(ctx context.Context) *gdb.Model {
-	return dao.DB().Model(dao.table).Safe().Ctx(ctx)
+	model := dao.DB().Model(dao.table)
+	for _, handler := range dao.handlers {
+		model = handler(model)
+	}
+	return model.Safe().Ctx(ctx)
 }
 
 // Transaction wraps the transaction logic using function f.

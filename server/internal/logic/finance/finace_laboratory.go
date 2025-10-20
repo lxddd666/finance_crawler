@@ -26,10 +26,10 @@ func (s *sSysTestFinance) MovingAverageLaboratory(ctx context.Context) {
 		trendList = append(trendList, trendListScan...)
 		trendList = append(trendList, &entity.FinanceKlineZigzagTrend{Code: klineList[len(klineList)-1].Code, KlineId: klineList[len(klineList)-1].Id, Key: klineList[len(klineList)-1].Key, MinChangePercent: 1, Day: klineList[len(klineList)-1].Day})
 
-		trendDayMap := make(map[string]float64)
-		for _, kline := range klineList {
-
-		}
+		//trendDayMap := make(map[string]float64)
+		//for _, kline := range klineList {
+		//
+		//}
 	}
 }
 

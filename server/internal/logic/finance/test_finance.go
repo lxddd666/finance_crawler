@@ -23,9 +23,7 @@ import (
 	"hotgo/internal/service"
 	"hotgo/utility/convert"
 	"hotgo/utility/excel"
-	"hotgo/utility/simple"
 	"math"
-	"sync"
 )
 
 type sSysTestFinance struct{}
@@ -217,37 +215,40 @@ func (s *sSysTestFinance) Status(ctx context.Context, in *sysin.TestFinanceStatu
 
 // Start 更新测试分类状态
 func (s *sSysTestFinance) Start(ctx context.Context) (err error) {
-	codeList, err := service.SysFinanceCode().GetAllCode(ctx)
-	if err != nil {
-		return
-	}
-	wg := sync.WaitGroup{}
-	// 创建大小为5的并发限制通道
-	concurrencyLimit := 5
-	semaphore := make(chan struct{}, concurrencyLimit)
-	for _, financeCode := range codeList {
-		wg.Add(1)
-		semaphore <- struct{}{}
-		simple.SafeGo(gctx.New(), func(ctx context.Context) {
-			defer wg.Done()
-			defer func() {
-				// 释放信号量
-				<-semaphore
-			}()
-			klineList, _ := service.SysFinanceCode().GetCodeKline(ctx, financeCode.CompleteCode, 0)
-			// 方法 1 推荐
-			trendPlotList := FindZigZagPointsWithKLine(klineList, 2)
-			var trendPlotListV2 []*entity.FinanceKline
-			for _, trendPlot := range trendPlotList {
-				trendPlotListV2 = append(trendPlotListV2, trendPlot.KLine)
-			}
-			//err = service.SysFinancePlot().TrendPlot(ctx, klineList, trendPlotListV2)
-			fmt.Println(err)
-		})
-	}
-	wg.Wait()
-
+	service.SysFinanceRsi().Rsi(ctx, "sh603259", 1200)
+	service.SysFinanceMacd().MacdV2(ctx, "sh603259", 1200)
 	return
+	//codeList, err := service.SysFinanceCode().GetAllCode(ctx)
+	//if err != nil {
+	//	return
+	//}
+	//wg := sync.WaitGroup{}
+	//// 创建大小为5的并发限制通道
+	//concurrencyLimit := 5
+	//semaphore := make(chan struct{}, concurrencyLimit)
+	//for _, financeCode := range codeList {
+	//	wg.Add(1)
+	//	semaphore <- struct{}{}
+	//	simple.SafeGo(gctx.New(), func(ctx context.Context) {
+	//		defer wg.Done()
+	//		defer func() {
+	//			// 释放信号量
+	//			<-semaphore
+	//		}()
+	//		klineList, _ := service.SysFinanceCode().GetCodeKline(ctx, financeCode.CompleteCode, 0)
+	//		// 方法 1 推荐
+	//		trendPlotList := FindZigZagPointsWithKLine(klineList, 2)
+	//		var trendPlotListV2 []*entity.FinanceKline
+	//		for _, trendPlot := range trendPlotList {
+	//			trendPlotListV2 = append(trendPlotListV2, trendPlot.KLine)
+	//		}
+	//		//err = service.SysFinancePlot().TrendPlot(ctx, klineList, trendPlotListV2)
+	//		fmt.Println(err)
+	//	})
+	//}
+	//wg.Wait()
+	//
+	//return
 }
 
 // // 如果你希望将所有波峰和波谷合并到一个列表中，可以使用这个函数

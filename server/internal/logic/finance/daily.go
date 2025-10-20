@@ -40,7 +40,7 @@ func (s *sSysFinanceCode) CodeDailyKlineStart(ctx context.Context) (err error) {
 		}
 		proxyFlag := true
 		// 创建大小为5的并发限制通道
-		concurrencyLimit := 35
+		concurrencyLimit := 30
 		semaphore := make(chan struct{}, concurrencyLimit)
 		wg := sync.WaitGroup{}
 		for _, code := range codeDaily {
@@ -55,7 +55,7 @@ func (s *sSysFinanceCode) CodeDailyKlineStart(ctx context.Context) (err error) {
 				}()
 				// sz002095
 				stockCode := fmt.Sprintf("%s%s", gstr.ToLower(code.Exchange), code.Code)
-				_, gErr := service.SysFinanceKline().Kline(ctx, stockCode, consts.MaNo, consts.ScaleDay, 3, proxyFlag)
+				_, gErr := service.SysFinanceKline().Kline(ctx, stockCode, consts.MaNo, consts.ScaleFiveDay, 300, proxyFlag)
 				if gErr != nil {
 					_, _ = dao.FinanceCodeDaily.Ctx(ctx).Where(dao.FinanceCodeDaily.Columns().Code, code.Code).Update(do.FinanceCodeDaily{Status: consts.TaskFail})
 				} else {
@@ -89,7 +89,7 @@ func (s *sSysFinanceCode) DailyIndicator(ctx context.Context) (err error) {
 			return
 		}
 		wg := &sync.WaitGroup{}
-		concurrencyLimit := 20
+		concurrencyLimit := 30
 		semaphore := make(chan struct{}, concurrencyLimit)
 
 		for _, financeCode := range codeDaily {
@@ -108,19 +108,27 @@ func (s *sSysFinanceCode) DailyIndicator(ctx context.Context) (err error) {
 					<-semaphore
 				}()
 				code := stock.GetCode(financeCode.Code, financeCode.Exchange)
-				klineList, gErr := s.GetCodeKline(ctx, code, 50)
-				if gErr != nil {
-					err = gErr
+				//klineList, gErr := s.GetCodeKline(ctx, code, 0)
+				//if gErr != nil {
+				//	err = gErr
+				//	return
+				//}
+				//_, _, err = service.SysFinanceBoll().Boll(ctx, klineList, consts.BollDefaultMultiple2)
+				//// macd
+				//_, err = service.SysFinanceMacd().Macd(ctx, klineList, consts.MacdDefaultSlowPeriod12, consts.MacdDefaultFastPeriod26, consts.MacdDefaultSignalPeriod9)
+				////// kdj
+				//_, err = service.SysFinanceKdj().Kdj(ctx, klineList, consts.KdjDefaultPeriod9)
+				//// 均线
+				//stock.ReverseKline(klineList)
+				//err = service.SysFinanceDailyKline().MovingAverage(ctx, klineList)
+				err = service.SysFinanceMacd().MacdV2(ctx, code, consts.ScaleFiveDay)
+				if err != nil {
 					return
 				}
-				_, _, err = service.SysFinanceBoll().Boll(ctx, klineList, consts.BollDefaultMultiple2)
-				// macd
-				_, err = service.SysFinanceMacd().Macd(ctx, klineList, consts.MacdDefaultSlowPeriod12, consts.MacdDefaultFastPeriod26, consts.MacdDefaultSignalPeriod9)
-				//// kdj
-				_, err = service.SysFinanceKdj().Kdj(ctx, klineList, consts.KdjDefaultPeriod9)
-				// 均线
-				stock.ReverseKline(klineList)
-				err = service.SysFinanceDailyKline().MovingAverage(ctx, klineList)
+				err = service.SysFinanceRsi().Rsi(ctx, code, consts.ScaleFiveDay)
+				if err != nil {
+					return
+				}
 			})
 		}
 		wg.Wait()

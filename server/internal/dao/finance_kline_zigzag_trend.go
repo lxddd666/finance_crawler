@@ -8,15 +8,15 @@ import (
 	"hotgo/internal/dao/internal"
 )
 
-// financeIndicatorDailyDao is the data access object for the table hg_finance_indicator_daily.
+// financeKlineZigzagTrendDao is the data access object for the table hg_finance_kline_zigzag_trend.
 // You can define custom methods on it to extend its functionality as needed.
-type financeIndicatorDailyDao struct {
-	*internal.FinanceIndicatorDailyDao
+type financeKlineZigzagTrendDao struct {
+	*internal.FinanceKlineZigzagTrendDao
 }
 
 var (
-	// FinanceIndicatorDaily is a globally accessible object for table hg_finance_indicator_daily operations.
-	FinanceIndicatorDaily = financeIndicatorDailyDao{internal.NewFinanceIndicatorDailyDao()}
+	// FinanceKlineZigzagTrend is a globally accessible object for table hg_finance_kline_zigzag_trend operations.
+	FinanceKlineZigzagTrend = financeKlineZigzagTrendDao{internal.NewFinanceKlineZigzagTrendDao()}
 )
 
 // Add your custom methods and functionality below.

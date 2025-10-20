@@ -74,7 +74,7 @@ func (s *sSysFinanceKline) Kline(ctx context.Context, code, ma string, scale, da
 			Volume:     gconv.Int64(kline.Volume),
 			Scale:      scale,
 			Day:        kline.Day,
-			Key:        fmt.Sprintf("%s%s", code, kline.Day),
+			Key:        fmt.Sprintf("%s%s:%d", code, kline.Day, scale),
 		})
 	}
 	if len(klineList) == 0 {

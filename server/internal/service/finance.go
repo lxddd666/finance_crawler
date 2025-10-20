@@ -39,6 +39,30 @@ type (
 		// GetCodeKline 获取股票k线
 		GetCodeKline(ctx context.Context, code string, KlineNum int) (list []*entity.FinanceKline, err error)
 	}
+	ISysTestFinance interface {
+		// MovingAverageLaboratory 移动平均线试验
+		MovingAverageLaboratory(ctx context.Context)
+		// ConvertToQueryString 将 FinanceAlltickRequest 结构体转换为 JSON 查询字符串
+		ConvertToQueryString(req *entity.FinanceAlltickRequest) (string, error)
+		// Model 测试分类ORM模型
+		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
+		// List 获取测试分类列表
+		List(ctx context.Context, in *sysin.TestFinanceListInp) (list []*sysin.TestFinanceListModel, totalCount int, err error)
+		// Export 导出测试分类
+		Export(ctx context.Context, in *sysin.TestFinanceListInp) (err error)
+		// Edit 修改/新增测试分类
+		Edit(ctx context.Context, in *sysin.TestFinanceEditInp) (err error)
+		// Delete 删除测试分类
+		Delete(ctx context.Context, in *sysin.TestFinanceDeleteInp) (err error)
+		// MaxSort 获取测试分类最大排序
+		MaxSort(ctx context.Context, in *sysin.TestFinanceMaxSortInp) (res *sysin.TestFinanceMaxSortModel, err error)
+		// View 获取测试分类指定信息
+		View(ctx context.Context, in *sysin.TestFinanceViewInp) (res *sysin.TestFinanceViewModel, err error)
+		// Status 更新测试分类状态
+		Status(ctx context.Context, in *sysin.TestFinanceStatusInp) (err error)
+		// Start 更新测试分类状态
+		Start(ctx context.Context) (err error)
+	}
 	ISysFinanceAlltickResponse interface {
 		// Model alltick返回值ORM模型
 		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
@@ -66,7 +90,7 @@ type (
 		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
 		// MovingAverage 均线计算
 		MovingAverage(ctx context.Context, klineList []*entity.FinanceKline) (err error)
-		// CalculateMAOptimized 计算每天均线
+		// CalculateMAOptimized 优化版本，使用滑动窗口避免重复求和
 		CalculateMAOptimized(klines []*entity.FinanceKline) []entity.FinanceDailyKline
 	}
 	ISysFinanceKdj interface {
@@ -89,6 +113,8 @@ type (
 		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
 		// Macd Macd计算
 		Macd(ctx context.Context, data []*entity.FinanceKline, slowPeriod int, fastPeriod int, signalPeriod int) (results []*entity.FinanceMacd, err error)
+		// v
+		MacdV2(ctx context.Context, code string, scale int) (err error)
 	}
 	ISysFinancePlot interface {
 		// Model plot图ORM模型
@@ -104,40 +130,23 @@ type (
 		RsiPlot(ctx context.Context, code string)
 		TrendPlot(ctx context.Context, klineList []*entity.FinanceKline, trendList []*entity.FinanceKline) (err error)
 	}
+	ISysFinanceRsi interface {
+		// Model rsi线ORM模型
+		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
+		// 使用示例
+		Rsi(ctx context.Context, code string, scale int) (err error)
+	}
 	ISysFinanceScreening interface {
 		// Model 筛股ORM模型
 		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
 		// ScreeningDaily 日常筛股
 		ScreeningDaily(ctx context.Context) (err error)
 	}
-	ISysTestFinance interface {
-		// ConvertToQueryString 将 FinanceAlltickRequest 结构体转换为 JSON 查询字符串
-		ConvertToQueryString(req *entity.FinanceAlltickRequest) (string, error)
-		// Model 测试分类ORM模型
-		Model(ctx context.Context, option ...*handler.Option) *gdb.Model
-		// List 获取测试分类列表
-		List(ctx context.Context, in *sysin.TestFinanceListInp) (list []*sysin.TestFinanceListModel, totalCount int, err error)
-		// Export 导出测试分类
-		Export(ctx context.Context, in *sysin.TestFinanceListInp) (err error)
-		// Edit 修改/新增测试分类
-		Edit(ctx context.Context, in *sysin.TestFinanceEditInp) (err error)
-		// Delete 删除测试分类
-		Delete(ctx context.Context, in *sysin.TestFinanceDeleteInp) (err error)
-		// MaxSort 获取测试分类最大排序
-		MaxSort(ctx context.Context, in *sysin.TestFinanceMaxSortInp) (res *sysin.TestFinanceMaxSortModel, err error)
-		// View 获取测试分类指定信息
-		View(ctx context.Context, in *sysin.TestFinanceViewInp) (res *sysin.TestFinanceViewModel, err error)
-		// Status 更新测试分类状态
-		Status(ctx context.Context, in *sysin.TestFinanceStatusInp) (err error)
-		// Start 更新测试分类状态
-		Start(ctx context.Context) (err error)
-		// MovingAverageLaboratory 移动平均线试验
-		MovingAverageLaboratory(ctx context.Context)
-	}
 )
 
 var (
 	localSysFinanceCode            ISysFinanceCode
+	localSysTestFinance            ISysTestFinance
 	localSysFinanceAlltickResponse ISysFinanceAlltickResponse
 	localSysFinanceBoll            ISysFinanceBoll
 	localSysFinanceDailyKline      ISysFinanceDailyKline
@@ -145,8 +154,8 @@ var (
 	localSysFinanceKline           ISysFinanceKline
 	localSysFinanceMacd            ISysFinanceMacd
 	localSysFinancePlot            ISysFinancePlot
+	localSysFinanceRsi             ISysFinanceRsi
 	localSysFinanceScreening       ISysFinanceScreening
-	localSysTestFinance            ISysTestFinance
 )
 
 func SysFinanceCode() ISysFinanceCode {
@@ -158,6 +167,17 @@ func SysFinanceCode() ISysFinanceCode {
 
 func RegisterSysFinanceCode(i ISysFinanceCode) {
 	localSysFinanceCode = i
+}
+
+func SysTestFinance() ISysTestFinance {
+	if localSysTestFinance == nil {
+		panic("implement not found for interface ISysTestFinance, forgot register?")
+	}
+	return localSysTestFinance
+}
+
+func RegisterSysTestFinance(i ISysTestFinance) {
+	localSysTestFinance = i
 }
 
 func SysFinanceAlltickResponse() ISysFinanceAlltickResponse {
@@ -237,6 +257,17 @@ func RegisterSysFinancePlot(i ISysFinancePlot) {
 	localSysFinancePlot = i
 }
 
+func SysFinanceRsi() ISysFinanceRsi {
+	if localSysFinanceRsi == nil {
+		panic("implement not found for interface ISysFinanceRsi, forgot register?")
+	}
+	return localSysFinanceRsi
+}
+
+func RegisterSysFinanceRsi(i ISysFinanceRsi) {
+	localSysFinanceRsi = i
+}
+
 func SysFinanceScreening() ISysFinanceScreening {
 	if localSysFinanceScreening == nil {
 		panic("implement not found for interface ISysFinanceScreening, forgot register?")
@@ -246,15 +277,4 @@ func SysFinanceScreening() ISysFinanceScreening {
 
 func RegisterSysFinanceScreening(i ISysFinanceScreening) {
 	localSysFinanceScreening = i
-}
-
-func SysTestFinance() ISysTestFinance {
-	if localSysTestFinance == nil {
-		panic("implement not found for interface ISysTestFinance, forgot register?")
-	}
-	return localSysTestFinance
-}
-
-func RegisterSysTestFinance(i ISysTestFinance) {
-	localSysTestFinance = i
 }
